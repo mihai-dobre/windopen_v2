@@ -1,6 +1,6 @@
 from django.forms import widgets
 from rest_framework import serializers
-from hackathon.models import Snippet
+from windopen.models import Snippet
 
 
 class SnippetSerializer(serializers.ModelSerializer):

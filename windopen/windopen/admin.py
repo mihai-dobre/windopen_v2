@@ -1,5 +1,5 @@
 from django.contrib import admin
-from hackathon.models import UserProfile, Profile, InstagramProfile, TwitterProfile, MeetupToken, GithubProfile, LinkedinProfile, TumblrProfile
+from windopen.models import UserProfile, Profile, InstagramProfile, TwitterProfile, MeetupToken, GithubProfile, LinkedinProfile, TumblrProfile
 
 # Register your models here.
 class TwitterProfileAdmin(admin.ModelAdmin):

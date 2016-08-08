@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url, include
 from rest_framework.routers import DefaultRouter
 
-from hackathon import views
+from windopen import views
 
 router = DefaultRouter()
 router.register(r'snippets', views.SnippetView)

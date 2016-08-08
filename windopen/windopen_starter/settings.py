@@ -1,5 +1,5 @@
 """
-Django settings for hackathon_starter project.
+Django settings for windopen_starter project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.7/topics/settings/
@@ -36,7 +36,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'hackathon',
+    'windopen',
     'bootstrapform',
     # 'django_openid',
     'django_nose',
@@ -56,9 +56,9 @@ MIDDLEWARE_CLASSES = (
     #'django_openid_consumer.SessionConsumer',
 )
 
-ROOT_URLCONF = 'hackathon_starter.urls'
+ROOT_URLCONF = 'windopen_starter.urls'
 
-WSGI_APPLICATION = 'hackathon_starter.wsgi.application'
+WSGI_APPLICATION = 'windopen_starter.wsgi.application'
 
 
 # Database

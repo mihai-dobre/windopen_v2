@@ -38,9 +38,9 @@ import simplejson as json
 import requests
 
 # Models
-from hackathon.models import *
-from hackathon.serializers import SnippetSerializer
-from hackathon.forms import UserForm
+from windopen.models import *
+from windopen.serializers import SnippetSerializer
+from windopen.forms import UserForm
 
 
 profile_track = None

@@ -20,7 +20,7 @@ import shlex
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath("hackathon/scripts/"))
+sys.path.insert(0, os.path.abspath("windopen/scripts/"))
 
 # -- General configuration ------------------------------------------------
 
@@ -55,7 +55,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Django Hackathon Starter'
+project = u'Django Windopen Starter'
 copyright = u'2015, David Leonard, Wan Kim Mok, Marco Quezada, Eswari Pravallika Swarna'
 author = u'David Leonard, Wan Kim Mok, Marco Quezada, Eswari Pravallika Swarna'
 
@@ -275,8 +275,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  (master_doc, 'DjangoHackathonStarter', u'Django Hackathon Starter Documentation',
-   author, 'DjangoHackathonStarter', 'One line description of project.',
+  (master_doc, 'DjangoWindopenStarter', u'Django Windopen Starter Documentation',
+   author, 'DjangoWindopenStarter', 'One line description of project.',
    'Miscellaneous'),
 ]
 

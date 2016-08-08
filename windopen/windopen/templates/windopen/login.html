@@ -1,17 +1,16 @@
-<!DOCTYPE html>
-<html>
-    {% include 'hackathon/base.html' %}
-    <style>
+{% extends 'windopen/base.html' %}
+{% block css %}
+{{block.super}}
+<style>
       .form-signin {
         max-width: 550px;
         padding: 15px;
         margin: 0 auto;
       }
     </style>
-
-    <body>
-      <div class="container text-center">
-        <form class="form-signin" id="login_form" method="post" action="/hackathon/login/">
+{% endblock %}
+{%block content %}
+        <form class="form-signin" id="login_form" method="post" action="{% url 'login' %}">
           {% csrf_token %}
           {% load bootstrap %}
           <h2 class="form-signin-heading">Login</h2>
@@ -23,7 +22,7 @@
           <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
           <input type="hidden" name="submit" value="submit" />
         </form>
-      </div>
+{% endblock %}
 
       <!-- <div class="form-signin">
         <a class="btn btn-block btn-social btn-twitter" href="http://127.0.0.1:8000/hackathon/twitter_login/">
@@ -63,5 +62,3 @@
           Sign in with Foursquare
         </a>
       </div> -->
-    </body>
-</html>

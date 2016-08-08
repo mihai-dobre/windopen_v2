@@ -308,7 +308,7 @@ def index(request):
 
 
     context = {'hello': 'world'}
-    return render(request, 'hackathon/index.html', context)
+    return render(request, 'windopen/index.html', context)
 
 
 ##################
@@ -317,7 +317,7 @@ def index(request):
 
 def api_examples(request):
     context = {'title': 'API Examples Page'}
-    return render(request, 'hackathon/api_examples.html', context)
+    return render(request, 'windopen/api_examples.html', context)
 
 #################
 #   STEAM API   #
@@ -328,7 +328,7 @@ def steam(request):
     SteamUN = "Marorin"
     steamID = steamidpulling(SteamUN, key)
     game = gamespulling(steamID, key)
-    return render(request,'hackathon/steam.html', {"game": game })
+    return render(request,'windopen/steam.html', {"game": game })
 
 def steamDiscountedGames(request):
     data = steamDiscounts()
@@ -343,7 +343,7 @@ def facebook(request):
     This is an example of getting basic user info and display it
     '''
     userInfo = getFacebook.get_user_info()
-    return render(request, 'hackathon/facebookAPIExample.html', { 'userInfo' : userInfo})
+    return render(request, 'windopen/facebookAPIExample.html', { 'userInfo' : userInfo})
 
 #################
 #  GOOGLE API   #
@@ -351,14 +351,14 @@ def facebook(request):
 def googlePlus(request):
 
     userInfo = getGoogle.get_user_info()
-    return render(request, 'hackathon/googlePlus.html', {'userInfo' : userInfo})
+    return render(request, 'windopen/googlePlus.html', {'userInfo' : userInfo})
 
 #################
 #  DROPBOX API  #
 #################
 def dropbox(request):
     userInfo = getDropbox.get_user_info()
-    return render(request, 'hackathon/dropbox.html', {'userInfo' : userInfo})
+    return render(request, 'windopen/dropbox.html', {'userInfo' : userInfo})
 
 def dropboxSearchFile(request):
     if request.method == 'POST':
@@ -372,7 +372,7 @@ def dropboxSearchFile(request):
         if response.status_code!=200:
             raise(Exception('Invalid response, response code {c}'.format(c=response.status_code)))
 
-        return render(request, 'hackathon/dropboxSearchFile.html', {'data': response.json()})
+        return render(request, 'windopen/dropboxSearchFile.html', {'data': response.json()})
 
 #######################
 #    FOURSQUARE API   #
@@ -380,7 +380,7 @@ def dropboxSearchFile(request):
 
 def foursquare(request):
     userInfo = getFoursquare.get_user_info()
-    return render(request, 'hackathon/foursquare.html', {'data' : userInfo})
+    return render(request, 'windopen/foursquare.html', {'data' : userInfo})
 
 
 #################
@@ -392,7 +392,7 @@ def yelp(request):
     if request.method == 'POST':
         location = request.POST.get('location')
         data = requestData(location)
-    return render(request, 'hackathon/yelp.html', { 'data': data })
+    return render(request, 'windopen/yelp.html', { 'data': data })
 
 #################
 #   MEETUP API  #
@@ -417,16 +417,16 @@ def meetupToken(request):
     else:
         meetupToken = MeetupToken(access_token = access_token)
         MeetupToken.objects.all()[0] = meetupToken
-    return HttpResponseRedirect('http://127.0.0.1:8000/hackathon/meetupUser/')
+    return HttpResponseRedirect('http://127.0.0.1:8000/windopen/meetupUser/')
 
 def meetupUser(request):
     if not MeetupToken.objects.all().exists():
-        return HttpResponseRedirect('http://127.0.0.1:8000/hackathon/meetup')
+        return HttpResponseRedirect('http://127.0.0.1:8000/windopen/meetup')
     access_token = MeetupToken.objects.all()[0]
     meetupData = {}
     userData = retrieveUserData('https://api.meetup.com/2/member/self/?access_token=' + str(access_token))
     meetupData['userData'] = userData
-    return render(request, 'hackathon/meetup.html', { 'data': meetupData })
+    return render(request, 'windopen/meetup.html', { 'data': meetupData })
 
 #################
 #   QUANDL API  #
@@ -486,7 +486,7 @@ def quandlstocks(request):
     everyData['nasdaqdiff'] = rdiffData(settings.QUANDLAPIKEY, 'https://www.quandl.com/api/v1/datasets/NASDAQOMX/COMP.json?')
     everyData['apple'] = fetchstockData(settings.QUANDLAPIKEY, 'https://www.quandl.com/api/v1/datasets/GOOG/NASDAQ_AAPL.json')
     everyData['applediff'] = rdiffData(settings.QUANDLAPIKEY, 'https://www.quandl.com/api/v1/datasets/GOOG/NASDAQ_AAPL.json')
-    return render(request, 'hackathon/quandl.html', { 'everyData': everyData })
+    return render(request, 'windopen/quandl.html', { 'everyData': everyData })
 
 #################
 #  NYTIMES API  #
@@ -508,7 +508,7 @@ def nytimesarticles(request):
     topdata = topdata = fetcharticle(settings.TOPAPIKEY, 'http://api.nytimes.com/svc/topstories/v1/home.json?')
     everyData['top'] = topdata
     everyData['pop'] = popdata
-    return render(request, 'hackathon/nytimes.html', { 'everyData': everyData })
+    return render(request, 'windopen/nytimes.html', { 'everyData': everyData })
 
 #################
 #   GITHUB API  #
@@ -520,7 +520,7 @@ def githubUser(request):
     if request.method == 'POST':
         user = request.POST.get('user')
         parsedData['userData'] = getUserData(user, settings.GITHUB_CLIENT_ID, settings.GITHUB_CLIENT_SECRET)
-    return render(request, 'hackathon/github.html', {'data': parsedData})
+    return render(request, 'windopen/github.html', {'data': parsedData})
 
 def githubTopRepositories(request):
     '''Returns Top Commited Repositories for a specific Github User'''
@@ -533,7 +533,7 @@ def githubTopRepositories(request):
         filtered = filterCommits(list)
         parsedData['committed'] = filtered
         print parsedData
-    return render(request, 'hackathon/githubTopRepositories.html', {'data': parsedData})
+    return render(request, 'windopen/githubTopRepositories.html', {'data': parsedData})
 
 def githubResume(request):
     '''A sample application which pulls various Github data to form a Resume of sorts'''
@@ -550,7 +550,7 @@ def githubResume(request):
     allData['filteredData'] = filtered
     allData['filteredStargazers'] = filteredStargazers
     allData['forkedRepos'] = forkedRepos
-    return render(request, 'hackathon/githubResume.html', { 'data': allData })
+    return render(request, 'windopen/githubResume.html', { 'data': allData })
 
 
 #################
@@ -574,7 +574,7 @@ def tumblr(request):
         return HttpResponseRedirect(tumblr_url)
 
     context = {'title': "What's up Starbucks?", 'blogData': blog, 'blogTag': tagged_blog, 'blogontag': blogontag}
-    return render(request, 'hackathon/tumblr.html', context)
+    return render(request, 'windopen/tumblr.html', context)
 
 
 ####################
@@ -599,7 +599,7 @@ def instagram(request):
         return HttpResponseRedirect(instagram_url)
 
     context = {'title': 'Instagram', 'tagged_media': tagged_media, 'search_tag': instagram_tag}
-    return render(request, 'hackathon/instagram.html', context)
+    return render(request, 'windopen/instagram.html', context)
 
 def instagramUser(request):
     ''' Returns JSON response about a specific Instagram User. '''
@@ -640,7 +640,7 @@ def instagramMediaByLocation(request):
 
 
     context = {'title': title, 'geocode_result':geocode_result, 'media':media, 'list_id':location_ids, 'err_msg': err_msg}
-    return render(request, 'hackathon/instagram_q.html', context)
+    return render(request, 'windopen/instagram_q.html', context)
 
 
 ####################
@@ -657,7 +657,7 @@ def twitter(request):
         return HttpResponseRedirect(twitter_url)
 
     context ={'title': 'twitter', 'value': value}
-    return render(request, 'hackathon/twitter.html', context)
+    return render(request, 'windopen/twitter.html', context)
 
 def twitterTweets(request):
     print getTwitter.is_authorized
@@ -675,7 +675,7 @@ def twitterTweets(request):
         return HttpResponseRedirect(twitter_url)
 
     context ={'title': 'twitter tweet', 'content': content, 'data': jsonlist}
-    return render(request, 'hackathon/twitter_tweet.html', context)
+    return render(request, 'windopen/twitter_tweet.html', context)
 
 
 ##################
@@ -692,7 +692,7 @@ def linkedin(request):
         return HttpResponseRedirect(linkedin_url)
 
     context = {'title': 'linkedin example', 'content': content}
-    return render(request, 'hackathon/linkedin.html', context)
+    return render(request, 'windopen/linkedin.html', context)
 
 
 #########################
@@ -723,7 +723,7 @@ def twilio(request):
         sendSMS(str(message), str(number), '+13473781813')
         context = {'message': 'Your message has been sent successfully!'}
         return HttpResponseRedirect('/hackathon/api/')
-    return render(request, 'hackathon/twilio.html')
+    return render(request, 'windopen/twilio.html')
 
 
 ######################
@@ -739,7 +739,7 @@ def register(request):
             user.set_password(user.password)
             user.save()
             registered = True
-            return HttpResponseRedirect('/hackathon/login/')
+            return HttpResponseRedirect('/windopen/login/')
         else:
             print user_form.errors
     else:
@@ -747,7 +747,7 @@ def register(request):
 
 
     return render(request,
-            'hackathon/register.html',
+            'windopen/register.html',
             {'user_form': user_form, 'registered': registered} )
 
 def user_login(request):
@@ -760,19 +760,19 @@ def user_login(request):
         if user:
             if user.is_active:
                 login(request, user)
-                return HttpResponseRedirect('/hackathon/api/')
+                return HttpResponseRedirect('/windopen/devices/')
             else:
-                return HttpResponse("Your Django Hackathon account is disabled.")
+                return HttpResponse("Your Django Windopen account is disabled.")
         else:
             print "Invalid login details: {0}, {1}".format(username, password)
             return HttpResponse("Invalid login details supplied.")
 
     else:
-        return render(request, 'hackathon/login.html', {})
+        return render(request, 'windopen/login.html', {})
 
 def user_logout(request):
     logout(request)
-    return HttpResponseRedirect('/hackathon/login/')
+    return HttpResponseRedirect('/windopen/login/')
 
 
 def instagram_login(request):

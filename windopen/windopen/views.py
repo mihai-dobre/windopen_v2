@@ -1,10 +1,8 @@
 # Django
-from django.shortcuts import render
-from django.contrib.auth import logout
-from django.template import RequestContext, loader
-from django.contrib.auth import authenticate, login
+from django.shortcuts import render, render_to_response
 from django.http import HttpResponse, HttpResponseRedirect
-from django.conf import settings
+from django.template import RequestContext
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -40,7 +38,8 @@ import requests
 # Models
 from windopen.models import *
 from windopen.serializers import SnippetSerializer
-from windopen.forms import UserForm
+from windopen.forms import UserForm, NewDeviceForm
+from windopen_starter.log import logger_windopen
 
 
 profile_track = None
@@ -310,6 +309,47 @@ def index(request):
     context = {'hello': 'world'}
     return render(request, 'windopen/index.html', context)
 
+@login_required
+def devices(request):
+    pass
+
+@login_required
+def new_device(request):
+    if request.method == 'POST':
+        form = NewDeviceForm(request.POST)
+
+        if not form.is_valid():
+            logger_windopen.error(form.errors)
+            return HttpResponse(json.dumps({'error': form.errors}), content_type='application/json')
+        else:
+            logger_windopen.info('new_sn: %s', form.cleaned_data)
+            new_sn = form.cleaned_data['new_device']
+            # check if the device is already registerd
+            existing_device = Device.objects.filter(uuid=new_sn)
+            if existing_device:
+                logger_windopen.info('Device `%s` is already registered to user `%s`', new_sn, existing_device[0].user.username)
+                msg = 'Device is already registered'
+                return HttpResponse(json.dumps({'msg': msg}), content_type='application/json')
+            # check if the device is connected to the rpyc server and if is in the unregistered table
+            unreg_device = UnregisteredDevice.objects.filter(uuid=new_sn)
+            if unreg_device:
+                d = Device(user=request.user, 
+                           uuid=new_sn,
+                           registered=datetime.now(),
+                           last_seen=datetime.now(),
+                           active=True)
+                d.save()
+                unreg_device.delete()
+                msg = 'Successfully registered new device'
+                logger_windopen.info('Registered new device `%s` to user `%s`', new_sn, request.user)
+            else:
+                msg = 'The device is not connected. Please connect the device and check for the green LED'
+                logger_windopen('Device `%s` is not connected.', new_sn)
+
+            return HttpResponse(json.dumps({'msg': msg}), content_type='application/json')
+    else:
+        form = NewDeviceForm()
+    return render_to_response('windopen/new_device.html', {'form': form}, context_instance=RequestContext(request))
 
 ##################
 #  API Examples  #
@@ -760,7 +800,7 @@ def user_login(request):
         if user:
             if user.is_active:
                 login(request, user)
-                return HttpResponseRedirect('/windopen/devices/')
+                return HttpResponseRedirect('/windopen/new_device/')
             else:
                 return HttpResponse("Your Django Windopen account is disabled.")
         else:

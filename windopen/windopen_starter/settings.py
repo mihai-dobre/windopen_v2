@@ -42,6 +42,7 @@ INSTALLED_APPS = (
     'django_nose',
     'rest_framework',
     'corsheaders',
+    'rpyc_server'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -156,3 +157,72 @@ DROPBOX_APP_SECRET = ''
 
 FOURSQUARE_APP_ID = ''
 FOURSQUARE_APP_SECRET = ''
+
+RPYC_PORT = 8010
+HOSTNAME = '127.0.0.1'
+
+# RPyc config
+R_CONFIG = {
+    'allow_pickle': True,
+    'allow_getattr': True,
+    'allow_setattr': True,
+    'allow_delattr': True,
+    'allow_all_attrs': True,
+    }
+SERVER_START = True
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        }
+    },
+    'formatters': {
+        'simple': {
+            'format': '%(asctime)s %(levelname)s %(message)s'
+        },
+        'verbose': {
+            'format': '%(asctime)s %(levelname)-8s %(message)s',
+            'datefmt': '%y-%m-%d %H:%M:%S',
+        },
+    },
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false'],
+        },
+        'debugtoolbar': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler'
+        },
+        'windopen': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': os.path.join(BASE_DIR, 'logs', 'windopen.log')
+        },
+        'mtu_service': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'formatter': 'verbose',
+            'filename': os.path.join(BASE_DIR, 'logs', 'mtu_service.log')
+        }
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+        },
+        'windopen': {
+            'handlers': ['windopen'],
+            'level': 'DEBUG',
+        },
+        'mtu_service': {
+            'handlers': ['mtu_service'],
+            'level': 'DEBUG',
+        }
+    }
+}

@@ -5,13 +5,13 @@
     <body>
         {% if registered %}
           <strong>Thank you for registering!</strong>
-          <a href="/hackathon/login/">Return to the homepage.</a><br />
+          <a href="/windopen/login/">Return to the homepage.</a><br />
         
         {% else %}
           <div class='container text-center'>
               <h2 class="form-signin-heading">Sign Up</h2>
               <br>
-              <form class="form-horizontal" id="user_form" method="post" action="/hackathon/register/"
+              <form class="form-horizontal" id="user_form" method="post" action="/windopen/register/"
                 enctype="multipart/form-data">
                 {% csrf_token %}
                 {% load bootstrap %} 

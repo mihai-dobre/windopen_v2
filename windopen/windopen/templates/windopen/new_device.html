@@ -1,0 +1,32 @@
+{% extends 'windopen/base.html' %}
+
+{% block css %}
+{{block.super}}
+<!--
+Add some style here! 
+<style>
+      .form-new_device {
+        max-width: 550px;
+        padding: 15px;
+        margin: 0 auto;
+      }
+    </style> -->
+{% endblock %}
+{%block content %}
+    <h2>Register a new device</h2>
+    <p class="text-primary">Before trying to register a new device be sure that it is plugged and the led is green.</p>
+    <p class="text-primary">Search the serial number of the device on the back of the device. Insert the serial number in the field below and click register</p>
+        <form class="form-new-device" id="new_device_form" method="post" action="{% url 'new_device' %}">
+          {% csrf_token %}
+          {% load bootstrap %}
+          
+          {{ form.new_device.errors }}
+          <label for="{{ form.new_device.id_for_label }}">Serial number:</label>
+          {{ form.new_device }}
+	      {% if form.new_device.help_text %}
+	          <p class="help">{{ form.new_device.help_text|safe }}</p>
+	       {% endif %}
+          <button class="btn btn-lg btn-primary" type="submit">Register</button>
+          <input type="hidden" name="submit" value="submit" />          
+        </form>
+{% endblock %}

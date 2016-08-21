@@ -1,1 +1,174 @@
 {% extends 'windopen/base.html' %}
+
+{% block css %}
+{{block.super}}
+<!--
+Add some style here! 
+<style>
+.form-new_device {
+max-width: 550px;
+padding: 15px;
+margin: 0 auto;
+}
+</style> -->
+{% endblock %}
+{%block content %}
+<!-- user = models.ForeignKey(User)
+# uuid of device
+uuid = models.CharField(max_length=128)
+open_code = models.CharField(max_length=32)
+close_code = models.CharField(max_length=32)
+registered = models.DateTimeField(default=date.today()) 
+last_seen = models.DateTimeField(default=date.today())
+active = models.BooleanField(default=None) -->
+<h2>Your devices</h2>
+<!--<table class="table table-striped" id="tickets-table">
+    <thead>
+        <tr>
+            <th>S.N.</th>
+            <th>Open Code</th>
+            <th>Close Code</th>
+            <th>Added on</th>
+            <th>Last time seen</th>
+            <th>Active</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for device in devices %}
+        <tr>
+            <td>{{ device.uuid }}</td>
+            <td>{{ device.open_code }}</td>
+            <td>{{ device.close_code }}</td>
+            <td>{{ device.registered }}</td>
+            <td>{{ device.last_seen }}</td>
+            <td>{{ device.active }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>-->
+<div class="devices">
+    {% for device in devices %}
+    <div class="device_{{ device.uuid }}_wrapper device">
+        <div class="row">
+            <div class="col-md-6 col-sm-12 col-xs-12">
+                <h3>{{ device.uuid }}</h3>
+                <p><strong>Added on:</strong> {{ device.registered }}</p>
+                <p class="form-inline"><strong>Open Code:</strong> <input class="form-control" type="text" value="{{ device.open_code }}" id="open_code_{{ device.uuid }}"> <a href="#" data-code="open_code" data-uuid="{{ device.uuid }}" class="btn btn-primary btn-sm">Generate</a></p>
+                <p class="form-inline"><strong>Close Code:</strong> <input class="form-control" type="text" value="{{ device.close_code }}" id="close_code_{{ device.uuid }}"> <a href="#" data-code="close_code" class="btn btn-primary btn-sm">Generate</a></p>
+                <p><strong>Status: </strong> {% if device.active %} <span class="css-led green"></span> {% else %} <span class="css-led red"></span> (<small> Last Seen: {{ device.last_seen }} </small>) {% endif %}</p>
+            </div>
+            <div class="col-md-6 col-sm-12 col-xs-12">
+                <div class="graph-wrapper" style="display:none">
+                    <div class="graph graph-{{ device.uuid }}" id="graph-{{ device.uuid }}"></div>
+                    <div class="interval-selector text-center">
+                        <ul class="list-inline ">
+                            <li><label><input class="interval-selector" data-uuid="{{ device.uuid }}" type="radio" id="interval-{{ device.uuid }}-radio[]" name="interval-{{ device.uuid }}-radio" value="day"> Day</label></li>
+                            <li><label><input class="interval-selector" data-uuid="{{ device.uuid }}" checked="checked" type="radio" id="interval-{{ device.uuid }}-radio[]" name="interval-{{ device.uuid }}-radio" value="week"> Week</label></li>
+                            <li><label><input class="interval-selector" data-uuid="{{ device.uuid }}" type="radio" id="interval-{{ device.uuid }}-radio[]" name="interval-{{ device.uuid }}-radio" value="month"> Month</label></li>
+                            <li><label><input class="interval-selector" data-uuid="{{ device.uuid }}" type="radio" id="interval-{{ device.uuid }}-radio[]" name="interval-{{ device.uuid }}-radio" value="year"> Year</label></li>
+                        </ul>
+                    </div>
+                </div>
+                <script type="text/javascript">
+                    $(function () {
+                        $.ajax({
+                            url: "{% url 'actions' %}",
+                            data: {'uuid': '{{ device.uuid }}'},
+                            dataType: 'json',
+                            type: 'get',
+                            success:function(response) {
+                                if(response.actions.length > 0) {
+                                    var datapoints = [];
+                                    for(i=0;i<response.actions.length;i++) {
+                                        var d = response.actions[i]["x"].split(",");
+                                        var tmp = { x: new Date( parseInt(d[0]),parseInt(d[1])-1,parseInt(d[2]),parseInt(d[3]),parseInt(d[4]),parseInt(d[5])) ,y: response.actions[i]["y"]};
+                                        datapoints.push(tmp);
+                                    }
+
+                                    var options = {
+                                        title: {
+                                            text: "{{ device.uuid }}"
+                                        },
+                                        height: 250,
+                                        animationEnabled: true,
+                                        axisX: {
+                                            valueFormatString: "YYYY-MM-DD hh:mm:ss",
+                                            interval: "week",
+                                        },
+                                        data: [
+                                            {
+                                                //                                    type: "stepLine", 
+                                                type: "stepLine", 
+                                                dataPoints: datapoints
+                                            }
+                                        ]
+                                    };
+
+                                    $("#graph-{{ device.uuid }}").height(250);
+                                    $("#graph-{{ device.uuid }}").CanvasJSChart(options);
+
+                                    $("#graph-{{ device.uuid }}").parent().show();
+                                }
+                            }
+                        });
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    <script type="text/javascript">
+    $(function() {
+        $("input.interval-selector").on("change",function() {
+            var that = $(this);
+            var uuid = that.attr("data-uuid");
+            var val = that.val();
+
+            $.ajax({
+                url: "{% url 'actions' %}",
+                data: {'uuid': uuid,'interval':val},
+                dataType: 'json',
+                type: 'get',
+                success:function(response) {
+                    var datapoints = [];
+                        for(i=0;i<response.actions.length;i++) {
+                            var d = response.actions[i]["x"].split(",");
+                            var tmp = { x: new Date( parseInt(d[0]),parseInt(d[1])-1,parseInt(d[2]),parseInt(d[3]),parseInt(d[4]),parseInt(d[5])) ,y: response.actions[i]["y"]};
+                            datapoints.push(tmp);
+                        }
+
+                        var options = {
+                            title: {
+                                text: uuid
+                            },
+                            height: 250,
+                            animationEnabled: true,
+                            axisX: {
+                                valueFormatString: "YYYY-MM-DD hh:mm:ss",
+                                interval: val,
+                            },
+                            axisY: {
+                                minimum:0,
+                                maximum:1.5,
+                            },
+                            data: [
+                                {
+                                    type: "stepLine", 
+                                    dataPoints: datapoints,
+                                    nullDataLineDashType:  "dot",
+                                }
+                            ]
+                        };
+
+//                        $("#graph-"+uuid).height(250);
+                        $("#graph-"+uuid).CanvasJSChart(options);
+
+                        $("#graph-"+uuid).show();
+                        $("#graph-"+uuid).parent().show();
+                }
+            });
+        });
+    })
+    </script>
+</div>
+{% endblock %}

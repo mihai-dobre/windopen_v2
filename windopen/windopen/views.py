@@ -34,6 +34,9 @@ from scripts.foursquare import *
 import oauth2 as oauth
 import simplejson as json
 import requests
+from datetime import timedelta
+from calendar import monthrange
+import time
 
 # Models
 from windopen.models import *
@@ -310,27 +313,67 @@ def index(request):
     return render(request, 'windopen/index.html', context)
 
 @login_required
+def actions(request):
+    if request.method == 'GET':
+        log.info('request: %s',request.GET)
+        req_params = request.GET
+        interval = req_params.get('interval', 'week')
+        uuid = req_params.get('uuid')
+        if interval == 'week':
+            end_day = datetime.now()
+            start_day = end_day + timedelta(days= -7)
+        elif interval == 'year':
+            end_day = datetime.now()
+            if monthrange(end_day.year, 2)[1] == 29 and end_day.month > 2:
+                start_day = end_day + timedelta(days = -366)
+            else:
+                start_day = end_day + timedelta(days = -365)    
+        elif interval == 'day':
+            end_day = datetime.now()
+            start_day = end_day + timedelta(days = -1)
+        else:
+            end_day = datetime.now()
+            no_days = monthrange(end_day.year, end_day.month-1)[1]
+            start_day = end_day + timedelta(days = no_days*-1)
+        actions = Action.objects.filter(action_start__range=[start_day, end_day], device_id = uuid)
+        response = []
+        for action in actions:
+            point = {'x': action.action_start.strftime('%Y,%m,%d,%H,%M,%S')}
+            if action.status == 'open':
+                point['y'] = 1
+            else:
+                point['y'] = 0
+            response.append(point)
+        log.info('graph info: %s', response)
+        return HttpResponse(json.dumps({'actions': response}))
+
+@login_required
 def devices(request):
     if request.method == 'POST':
-        form = DeviceForm()
-        return render_to_response('windopen/new_device.html', {'form': form}, context_instance=RequestContext(request))
+#         form = DeviceForm()
+#         return render_to_response('windopen/new_device.html', {'form': form}, context_instance=RequestContext(request)
+        pass
     else:
-        form = DeviceForm()
         context = RequestContext(request)
-        log.warning('#### second context: %s',context)
-        devices = Device.objects.all(user=request.user)
+        log.warning('second context: %s',context)
+        try:
+            devices = Device.objects.filter(user=request.user)
+        except Exception as err:
+            log.error('err dev: %s', err)
+        log.warning('devices: %s', len(devices))
         context.update({'devices': devices})
-        return render_to_response('windopen/devices.html', {'form': form}, context_instance=RequestContext(request))
+        log.info('### context full: %s', context)
+        return render_to_response('windopen/devices.html', context_instance=context)
 
 
 @login_required
 def new_device(request):
     if request.method == 'POST':
         form = NewDeviceForm(request.POST)
-
         if not form.is_valid():
-            log.error(form.errors)
-            return HttpResponse(json.dumps({'error': form.errors}), content_type='application/json')
+            log.error(dir(form.errors))
+            log.error(form.errors['new_device'].data)
+            return HttpResponse(json.dumps({'status':'error', 'msg': form.errors['new_device'][0] if 'new_device' in form.errors else form.errors}), content_type='application/json')
         else:
             log.info('new_sn: %s', form.cleaned_data)
             new_sn = form.cleaned_data['new_device']
@@ -338,8 +381,9 @@ def new_device(request):
             existing_device = Device.objects.filter(uuid=new_sn)
             if existing_device:
                 log.info('Device `%s` is already registered to user `%s`', new_sn, existing_device[0].user.username)
+                status = 'error'
                 msg = 'Device is already registered'
-                return HttpResponse(json.dumps({'msg': msg}), content_type='application/json')
+                return HttpResponse(json.dumps({'status': status, 'msg': msg}), content_type='application/json')
             # check if the device is connected to the rpyc server and if is in the unregistered table
             unreg_device = UnregisteredDevice.objects.filter(uuid=new_sn)
             if unreg_device:
@@ -350,13 +394,30 @@ def new_device(request):
                            active=True)
                 d.save()
                 unreg_device.delete()
+                status = 'success'
                 msg = 'Successfully registered new device'
                 log.info('Registered new device `%s` to user `%s`', new_sn, request.user)
+                for i in range(10):
+                    try:
+                        a = Action(device=d, user=request.user)
+                        if i % 2 == 1:
+                            a.status = 'open'
+                        else:
+                            a.status = 'close'
+                        a.action_start = datetime.now()-timedelta(5)
+                        a.action_end = datetime.now()-timedelta(5)
+                        a.save()
+                    except Exception as err:
+                        log.error('err create action: %s', err)
+                    time.sleep(2)    
+        
+                log.info('done creating actions')
             else:
+                status = 'error'
                 msg = 'The device is not connected. Please connect the device and check for the green LED'
                 log.warning('Device `%s` is not connected.', new_sn)
 
-            return HttpResponse(json.dumps({'msg': msg}), content_type='application/json')
+            return HttpResponse(json.dumps({'status': status, 'msg': msg}), content_type='application/json')
     else:
         form = NewDeviceForm()
     return render_to_response('windopen/new_device.html', {'form': form}, context_instance=RequestContext(request))
@@ -810,7 +871,7 @@ def user_login(request):
         if user:
             if user.is_active:
                 login(request, user)
-                return HttpResponseRedirect('/windopen/devices/')
+                return HttpResponseRedirect('/windopen/devices')
             else:
                 return HttpResponse("Your Django Windopen account is disabled.")
         else:

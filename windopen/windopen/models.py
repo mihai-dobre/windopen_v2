@@ -21,7 +21,8 @@ class Profile(models.Model):
 
 class Device(models.Model):
     user = models.ForeignKey(User)
-    uuid = models.CharField(max_length=128)
+    # uuid of device
+    uuid = models.CharField(max_length=128, unique=True)
     open_code = models.CharField(max_length=32)
     close_code = models.CharField(max_length=32)
     registered = models.DateTimeField(default=date.today()) 
@@ -29,7 +30,7 @@ class Device(models.Model):
     active = models.BooleanField(default=None)
 
 class Action(models.Model):
-    device = models.ForeignKey(Device)
+    device = models.ForeignKey(Device, 'uuid')
     user = models.ForeignKey(User)
     status = models.CharField(max_length=128)
     action_start = models.DateTimeField(default=date.today())

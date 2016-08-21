@@ -1,0 +1,29 @@
+form #form-response {
+    display:none;
+    padding:10px 0;
+}
+
+form #form-response.error {
+    color:red;
+}
+
+form #form-response.success {
+    color:green;
+}
+
+.css-led {
+    width:16px;
+    height:16px;
+    display:inline-block;
+    vertical-align:text-bottom;
+    border-radius:50%;
+}
+.css-led.red {background:#ff0000;}
+.css-led.green {background:#00FF00;}
+
+.devices {}
+.devices .device {
+    padding:0 0 30px 0;
+    margin-bottom:30px;
+    border-bottom:1px solid #ccc;
+}

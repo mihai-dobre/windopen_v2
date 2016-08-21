@@ -14,6 +14,7 @@ urlpatterns = patterns('',
     url(r'^api/$', views.api_examples, name='api'),
     url(r'^devices/$', views.devices, name='devices'),
     url(r'^new_device/$', views.new_device, name='new_device'),
+    url(r'^actions/$', views.actions, name='actions'),
     )
 
 #     url(r'^steam/$', views.steam, name='steam'),

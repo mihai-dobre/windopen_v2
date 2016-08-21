@@ -9,13 +9,15 @@
     {% block js %}
 	    <script type="text/javascript" src="{{ STATIC_URL }}bower_components/jquery/dist/jquery.js"></script>
 	    <script type="text/javascript" src="{{ STATIC_URL }}bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-	    <script type="text/javascript" src="{{ STATIC_URL }}bower_components/d3/d3.min.js"></script>
+        <script type="text/javascript" src="{{ STATIC_URL }}bower_components/d3/d3.min.js"></script>
+	    <script type="text/javascript" src="{{ STATIC_URL }}js/canvasjs/jquery.canvasjs.min.js"></script>
     {% endblock %}
     {% block css %}
     <link rel="stylesheet" href="{{ STATIC_URL }}bower_components/bootstrap/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ STATIC_URL }}bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
     <link rel="stylesheet" href="{{ STATIC_URL }}bower_components/bootstrap-social/bootstrap-social.css">
     <link rel="stylesheet" href="{{ STATIC_URL }}bower_components/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/main.css">
     {% endblock %}
 
     {% block meta %}

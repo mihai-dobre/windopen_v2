@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -23,18 +23,21 @@ class Device(models.Model):
     user = models.ForeignKey(User)
     # uuid of device
     uuid = models.CharField(max_length=128, unique=True)
-    open_code = models.CharField(max_length=32)
-    close_code = models.CharField(max_length=32)
-    registered = models.DateTimeField(default=date.today()) 
-    last_seen = models.DateTimeField(default=date.today())
+    open_code = models.CharField(max_length=512)
+    close_code = models.CharField(max_length=512)
+    registered = models.DateTimeField(default=datetime.now()) 
+    last_seen = models.DateTimeField(default=datetime.now())
     active = models.BooleanField(default=None)
+    status = models.CharField(max_length=32, default='close')
 
 class Action(models.Model):
     device = models.ForeignKey(Device, 'uuid')
     user = models.ForeignKey(User)
     status = models.CharField(max_length=128)
-    action_start = models.DateTimeField(default=date.today())
-    action_end = models.DateTimeField(default=date.today())
+    action_start = models.DateTimeField(default=datetime.now())
+    action_end = models.DateTimeField(default=datetime.now())
+    class Meta:
+        ordering = ['action_start']
 
 class UnregisteredDevice(models.Model):
     uuid = models.CharField(max_length=32)

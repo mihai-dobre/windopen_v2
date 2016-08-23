@@ -23,28 +23,28 @@ last_seen = models.DateTimeField(default=date.today())
 active = models.BooleanField(default=None) -->
 <h2>Your devices</h2>
 <!--<table class="table table-striped" id="tickets-table">
-    <thead>
-        <tr>
-            <th>S.N.</th>
-            <th>Open Code</th>
-            <th>Close Code</th>
-            <th>Added on</th>
-            <th>Last time seen</th>
-            <th>Active</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for device in devices %}
-        <tr>
-            <td>{{ device.uuid }}</td>
-            <td>{{ device.open_code }}</td>
-            <td>{{ device.close_code }}</td>
-            <td>{{ device.registered }}</td>
-            <td>{{ device.last_seen }}</td>
-            <td>{{ device.active }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+<thead>
+<tr>
+<th>S.N.</th>
+<th>Open Code</th>
+<th>Close Code</th>
+<th>Added on</th>
+<th>Last time seen</th>
+<th>Active</th>
+</tr>
+</thead>
+<tbody>
+{% for device in devices %}
+<tr>
+<td>{{ device.uuid }}</td>
+<td>{{ device.open_code }}</td>
+<td>{{ device.close_code }}</td>
+<td>{{ device.registered }}</td>
+<td>{{ device.last_seen }}</td>
+<td>{{ device.active }}</td>
+</tr>
+{% endfor %}
+</tbody>
 </table>-->
 <div class="devices">
     {% for device in devices %}
@@ -53,9 +53,13 @@ active = models.BooleanField(default=None) -->
             <div class="col-md-6 col-sm-12 col-xs-12">
                 <h3>{{ device.uuid }}</h3>
                 <p><strong>Added on:</strong> {{ device.registered }}</p>
-                <p class="form-inline"><strong>Open Code:</strong> <input class="form-control" type="text" value="{{ device.open_code }}" id="open_code_{{ device.uuid }}"> <a href="#" data-code="open_code" data-uuid="{{ device.uuid }}" class="btn btn-primary btn-sm">Generate</a></p>
-                <p class="form-inline"><strong>Close Code:</strong> <input class="form-control" type="text" value="{{ device.close_code }}" id="close_code_{{ device.uuid }}"> <a href="#" data-code="close_code" class="btn btn-primary btn-sm">Generate</a></p>
+                <p class="form-inline"><strong>Open Code:</strong> <input class="form-control" type="text" value="{{ device.open_code }}" id="open_code_{{ device.uuid }}"> <a href="#" data-uuid="{{ device.uuid }}" class="btn btn-primary btn-sm generate-open-code">Generate</a></p>
+                <p class="form-inline"><strong>Close Code:</strong> <input class="form-control" type="text" value="{{ device.close_code }}" id="close_code_{{ device.uuid }}"> <a href="#" data-uuid="{{ device.uuid }}" class="btn btn-primary btn-sm generate-close-code">Generate</a></p>
                 <p><strong>Status: </strong> {% if device.active %} <span class="css-led green"></span> {% else %} <span class="css-led red"></span> (<small> Last Seen: {{ device.last_seen }} </small>) {% endif %}</p>
+                {% if device.active %}
+                <a href="#" data-uuid="{{ device.uuid }}" class="btn btn-primary btn-sm trigger-close" {% if device.status != 'open' %} style="display:none" {% endif %}>Close Window</a>
+                <a href="#" data-uuid="{{ device.uuid }}" class="btn btn-primary btn-sm trigger-open" {% if device.status != 'close' %} style="display:none" {% endif %}>Open Window</a>
+                {% endif %}
             </div>
             <div class="col-md-6 col-sm-12 col-xs-12">
                 <div class="graph-wrapper" style="display:none">
@@ -66,51 +70,13 @@ active = models.BooleanField(default=None) -->
                             <li><label><input class="interval-selector" data-uuid="{{ device.uuid }}" checked="checked" type="radio" id="interval-{{ device.uuid }}-radio[]" name="interval-{{ device.uuid }}-radio" value="week"> Week</label></li>
                             <li><label><input class="interval-selector" data-uuid="{{ device.uuid }}" type="radio" id="interval-{{ device.uuid }}-radio[]" name="interval-{{ device.uuid }}-radio" value="month"> Month</label></li>
                             <li><label><input class="interval-selector" data-uuid="{{ device.uuid }}" type="radio" id="interval-{{ device.uuid }}-radio[]" name="interval-{{ device.uuid }}-radio" value="year"> Year</label></li>
+                            <li><a href="{% url 'actions_details' uuid=device.uuid %}" class="btn btn-sm btn-primary">View Details</a></li>
                         </ul>
                     </div>
                 </div>
                 <script type="text/javascript">
                     $(function () {
-                        $.ajax({
-                            url: "{% url 'actions' %}",
-                            data: {'uuid': '{{ device.uuid }}'},
-                            dataType: 'json',
-                            type: 'get',
-                            success:function(response) {
-                                if(response.actions.length > 0) {
-                                    var datapoints = [];
-                                    for(i=0;i<response.actions.length;i++) {
-                                        var d = response.actions[i]["x"].split(",");
-                                        var tmp = { x: new Date( parseInt(d[0]),parseInt(d[1])-1,parseInt(d[2]),parseInt(d[3]),parseInt(d[4]),parseInt(d[5])) ,y: response.actions[i]["y"]};
-                                        datapoints.push(tmp);
-                                    }
-
-                                    var options = {
-                                        title: {
-                                            text: "{{ device.uuid }}"
-                                        },
-                                        height: 250,
-                                        animationEnabled: true,
-                                        axisX: {
-                                            valueFormatString: "YYYY-MM-DD hh:mm:ss",
-                                            interval: "week",
-                                        },
-                                        data: [
-                                            {
-                                                //                                    type: "stepLine", 
-                                                type: "stepLine", 
-                                                dataPoints: datapoints
-                                            }
-                                        ]
-                                    };
-
-                                    $("#graph-{{ device.uuid }}").height(250);
-                                    $("#graph-{{ device.uuid }}").CanvasJSChart(options);
-
-                                    $("#graph-{{ device.uuid }}").parent().show();
-                                }
-                            }
-                        });
+                        refreshGraph("{{ device.uuid }}");
                     });
                 </script>
             </div>
@@ -118,19 +84,100 @@ active = models.BooleanField(default=None) -->
     </div>
     {% endfor %}
     <script type="text/javascript">
-    $(function() {
-        $("input.interval-selector").on("change",function() {
-            var that = $(this);
-            var uuid = that.attr("data-uuid");
-            var val = that.val();
+        $(function() {
+            $(".trigger-open").on("click",function(e) {
+                e.preventDefault();
+                var that = $(this);
+                var uuid = that.attr("data-uuid");
+                $.ajax({
+                    url: "{% url 'open_window' %}",
+                    data: {'uuid': uuid},
+                    dataType: 'json',
+                    type: 'get',
+                    success:function(response) {
+                        if(response.msg == "ok" || response.msg == "Already opened") {
+                            that.parent().find(".trigger-close").show();
+                            that.hide();
+                            refreshGraph(uuid);
+                        }
+                    }
+                });
+            });
 
+            $(".trigger-close").on("click",function(e) {
+                e.preventDefault();
+                var that = $(this);
+                var uuid = that.attr("data-uuid");
+                $.ajax({
+                    url: "{% url 'close_window' %}",
+                    data: {'uuid': uuid},
+                    dataType: 'json',
+                    type: 'get',
+                    success:function(response) {
+                        if(response.msg == "ok" || response.msg == "Already closed") {
+                            that.parent().find(".trigger-open").show();
+                            that.hide();
+                            refreshGraph(uuid);
+                        }
+                    }
+                });
+            });
+
+            $(".generate-open-code").on("click",function(e) {
+                e.preventDefault();
+                var that = $(this);
+                var uuid = that.attr("data-uuid");
+                var input = $(".devices").find("#open_code_"+uuid);
+                $.ajax({
+                    url: "{% url 'open_code' %}",
+                    data: {'uuid': uuid},
+                    dataType: 'json',
+                    type: 'get',
+                    success:function(response) {
+                        input.val(response.open_code);
+                    }
+                });
+            });
+
+            $(".generate-close-code").on("click",function(e) {
+                e.preventDefault();
+                var that = $(this);
+                var uuid = that.attr("data-uuid");
+                var input = $(".devices").find("#close_code_"+uuid);
+                $.ajax({
+                    url: "{% url 'close_code' %}",
+                    data: {'uuid': uuid},
+                    dataType: 'json',
+                    type: 'get',
+                    success:function(response) {
+                        input.val(response.close_code);
+                    }
+                });
+            });
+
+            $("input.interval-selector").on("change",function() {
+                var that = $(this);
+                var uuid = that.attr("data-uuid");
+                var val = that.val();
+                
+                refreshGraph(uuid,val);
+
+                
+            });
+        });
+
+        function refreshGraph(uuid,interval) {
+            interval = typeof interval !== 'undefined' ? interval : "week";
+            $('input[name="interval-'+uuid+'-radio"][value="'+interval+'"]').prop("checked",true);
+            var data = {'uuid': uuid, 'interval':interval};
             $.ajax({
                 url: "{% url 'actions' %}",
-                data: {'uuid': uuid,'interval':val},
+                data: data,
                 dataType: 'json',
                 type: 'get',
                 success:function(response) {
-                    var datapoints = [];
+                    if(response.actions.length > 0) {
+                        var datapoints = [];
                         for(i=0;i<response.actions.length;i++) {
                             var d = response.actions[i]["x"].split(",");
                             var tmp = { x: new Date( parseInt(d[0]),parseInt(d[1])-1,parseInt(d[2]),parseInt(d[3]),parseInt(d[4]),parseInt(d[5])) ,y: response.actions[i]["y"]};
@@ -145,30 +192,24 @@ active = models.BooleanField(default=None) -->
                             animationEnabled: true,
                             axisX: {
                                 valueFormatString: "YYYY-MM-DD hh:mm:ss",
-                                interval: val,
-                            },
-                            axisY: {
-                                minimum:0,
-                                maximum:1.5,
+                                interval: interval,
                             },
                             data: [
                                 {
+                                    //                                    type: "stepLine", 
                                     type: "stepLine", 
-                                    dataPoints: datapoints,
-                                    nullDataLineDashType:  "dot",
+                                    dataPoints: datapoints
                                 }
                             ]
                         };
-
-//                        $("#graph-"+uuid).height(250);
+                        $("#graph-"+uuid).height(250);
                         $("#graph-"+uuid).CanvasJSChart(options);
 
-                        $("#graph-"+uuid).show();
                         $("#graph-"+uuid).parent().show();
+                    }
                 }
             });
-        });
-    })
+        }
     </script>
 </div>
 {% endblock %}

@@ -61,7 +61,11 @@ class MTUService(rpyc.Service):
         uuid = conn.root.get_uuid()
         log.info('new_uuid: %s', uuid)
         # search through the paired devices
-        dvs = Device.objects.get(uuid=uuid)
+        try:
+            dvs = Device.objects.get(uuid=uuid)
+        except Exception as err:
+            log.info('Device is not registered: %s', uuid)
+            dvs = []
         log.info('######### devices already: %s',dvs)
         if dvs:
             dvs.active = True

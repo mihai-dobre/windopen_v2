@@ -39,13 +39,13 @@ from datetime import timedelta
 from calendar import monthrange
 import time
 import hashlib
+import random
 
 # Models
 from windopen.models import *
 from windopen.serializers import SnippetSerializer
 from windopen.forms import UserForm, NewDeviceForm, DeviceForm
 from windopen_starter.log import logger_windopen as log
-from rpyc_server import MTU_SERVER
 
 
 profile_track = None
@@ -322,34 +322,122 @@ def index(request):
 # action_end = models.DateTimeField(default=date.today())
 
 @login_required
+def actions_details(request, uuid):
+    if request.method != 'GET':
+        return HttpResponseNotAllowed()
+    context = RequestContext(request)
+    try:
+        actions = Action.objects.filter(device_id = uuid)
+    except Exception as err:
+        log.warning('No actions on device: %s', err)
+        actions = []
+    context.update({'actions': actions})
+    colors = []
+    users = []
+    for action in actions:
+        if not action.user.username in users:
+            r = lambda: random.randint(0,255)
+            colors.append({'user': action.user.username, 'color': '#%02X%02X%02X' % (r(),r(),r())})
+            users.append(action.user.username)
+    log.info('culori: %s', colors)
+    context.update({'colors': colors})
+    context.update({'device': str(uuid)})
+    log.info('____@@@@@@@@@@@@@: %s',context)
+    return render_to_response('windopen/actions_details.html', context_instance=context)
+        
+
+def open_window_remote(request, code):
+    if request.method != 'GET':
+        return HttpResponseNotAllowed()
+        
+    log.info('Command: open remote')
+    sep = os.path.sep
+    app_path = sep.join(request.path.strip(sep).split(sep)[:2])
+    host = request.META.get('HTTP_HOST')
+    app_path = host + sep + app_path + sep
+    log.info('app_path: %s', app_path)
+    open_code = 'http://' + app_path + code + sep
+    log.info('open_code_reverse: %s', open_code)
+    try:
+        d = Device.objects.get(open_code = open_code)
+    except Exception as err:
+        log.error('Device not found %s', open_code)
+    return HttpResponse(open_code)
+
+
+def close_window_remote(request, code):
+    log.info('remote code: %s', code)
+    if request.method == 'GET':
+        log.info('Command: close remote')
+    return HttpResponse()
+
+
+@login_required
 def open_window(request):
     if request.method == 'GET':
         log.info('request: %s',request.GET.get('uuid'))
+#         return HttpResponse(json.dumps({'msg':'ok'}))
         try:
             uuid = request.GET.get('uuid', '')
             if not uuid:
                 return HttpResponseBadRequest('Empty uuid')
-            d = Device.objects.get(uuid=uuid)
+            try:
+                d = Device.objects.get(uuid=uuid)
+            except Exception as err:
+                d = None
             log.info('a luat device: %s', d.__dict__)
             if not d:
                 return Http404('Device `{}` not found'.format(uuid))
             if d.status == 'open':
                 return HttpResponse(json.dumps({'msg':'Already opened'}))
-            log.info('e close %s', MTU_SERVER)
-            if MTU_SERVER:
-                result = MTU_SERVER.open_window(d.uuid)
-                return HttpResponse(json.dumps({'msg':result}))
             else:
-                return Http404(json.dumps({'msg':'Communication server down'}))
+                d.status = 'open'
+                d.save()
+                a = Action(device=d, user=request.user)
+                a.status = 'open'
+                a.action_start = datetime.now()
+                a.action_end = datetime.now()
+                a.save()
+            log.info('Command: open window %s', uuid)
+            return HttpResponse(json.dumps({'msg':'ok'}))
         except Exception as err:
             log.error('ERRORRR: %s', err)
             HttpResponse('error')
-    return Http404('Use GET for displaying actions')
+    return Http404('Use GET for actions')
 
 
 @login_required
 def close_window(request):
-    pass
+    if request.method == 'GET':
+        log.info('request: %s',request.GET.get('uuid'))
+#         return HttpResponse(json.dumps({'msg':'ok'}))
+        try:
+            uuid = request.GET.get('uuid', '')
+            if not uuid:
+                return HttpResponseBadRequest('Empty uuid')
+            try:
+                d = Device.objects.get(uuid=uuid)
+            except Exception as err:
+                d = None
+            log.info('a luat device: %s', d.__dict__)
+            if not d:
+                return Http404('Device `{}` not found'.format(uuid))
+            if d.status == 'close':
+                return HttpResponse(json.dumps({'msg':'Already closed'}))
+            else:
+                d.status = 'close'
+                d.save()
+                a = Action(device=d, user=request.user)
+                a.status = 'close'
+                a.action_start = datetime.now()
+                a.action_end = datetime.now()
+                a.save()
+            log.info('Command: close window %s', uuid)
+            return HttpResponse(json.dumps({'msg':'ok'}))
+        except Exception as err:
+            log.error('ERRORRR: %s', err)
+            HttpResponse('error')
+    return Http404('Use GET for actions')
 
 @login_required
 def actions(request):
@@ -402,7 +490,7 @@ def generate_open_code(request):
             return HttpResponse(json.dumps({'open_code': 'invalid device uuid `{}`'.format(uuid)}))
         open_code = hashlib.sha224('{}{}'.format(uuid, time_salt)).hexdigest()
         device = Device.objects.get(uuid = uuid, user=request.user)
-        device.open_code = 'http://' + app_path + 'open' + sep + open_code
+        device.open_code = 'http://' + app_path + 'open_remote' + sep + open_code + sep
         device.save()
         return HttpResponse(json.dumps({'open_code': device.open_code}))
     else:
@@ -422,7 +510,7 @@ def generate_close_code(request):
             return HttpResponse(json.dumps({'close_code': 'invalid device uuid `{}`'.format(uuid)}))
         close_code = hashlib.sha224('{}{}'.format(uuid, time_salt)).hexdigest()
         device = Device.objects.get(uuid = uuid, user=request.user)
-        device.close_code = 'http://' + app_path + 'open' + sep + close_code
+        device.close_code = 'http://' + app_path + 'close_remote' + sep + close_code + sep
         device.save()
         return HttpResponse(json.dumps({'close_code': device.close_code}))
     else:
@@ -431,21 +519,17 @@ def generate_close_code(request):
 
 @login_required
 def devices(request):
-    if request.method in ['POST', 'PUT']:
-#         form = DeviceForm()
-#         return render_to_response('windopen/new_device.html', {'form': form}, context_instance=RequestContext(request)
+    if request.method != 'GET':
         return HttpResponseNotAllowed('Use GET to display devices')
-    else:
-        context = RequestContext(request)
-#         log.warning('second context: %s',context)
-        try:
-            devices = Device.objects.filter(user=request.user)
-        except Exception as err:
-            log.error('err dev: %s', err)
-#         log.warning('devices: %s', len(devices))
-        context.update({'devices': devices})
-#         log.info('### context full: %s', context)
-        return render_to_response('windopen/devices.html', context_instance=context)
+    
+    context = RequestContext(request)
+    try:
+        devices = Device.objects.filter(user=request.user)
+    except Exception as err:
+        log.warning('No devices registered for user: %s | %s', request.user, err)
+        devices = []
+    context.update({'devices': devices})
+    return render_to_response('windopen/devices.html', context_instance=context)
 
 
 @login_required

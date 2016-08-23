@@ -1,6 +1,6 @@
 # Django
 from django.shortcuts import render, render_to_response
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseNotAllowed, HttpResponseBadRequest, Http404
 from django.template import RequestContext
 
 from django.contrib.auth import authenticate, login, logout
@@ -31,18 +31,21 @@ from scripts.dropbox import *
 from scripts.foursquare import *
 
 # Python
+import os
 import oauth2 as oauth
 import simplejson as json
 import requests
 from datetime import timedelta
 from calendar import monthrange
 import time
+import hashlib
 
 # Models
 from windopen.models import *
 from windopen.serializers import SnippetSerializer
 from windopen.forms import UserForm, NewDeviceForm, DeviceForm
 from windopen_starter.log import logger_windopen as log
+from rpyc_server import MTU_SERVER
 
 
 profile_track = None
@@ -312,6 +315,42 @@ def index(request):
     context = {'hello': 'world'}
     return render(request, 'windopen/index.html', context)
 
+# device = models.ForeignKey(Device, 'uuid')
+# user = models.ForeignKey(User)
+# status = models.CharField(max_length=128)
+# action_start = models.DateTimeField(default=date.today())
+# action_end = models.DateTimeField(default=date.today())
+
+@login_required
+def open_window(request):
+    if request.method == 'GET':
+        log.info('request: %s',request.GET.get('uuid'))
+        try:
+            uuid = request.GET.get('uuid', '')
+            if not uuid:
+                return HttpResponseBadRequest('Empty uuid')
+            d = Device.objects.get(uuid=uuid)
+            log.info('a luat device: %s', d.__dict__)
+            if not d:
+                return Http404('Device `{}` not found'.format(uuid))
+            if d.status == 'open':
+                return HttpResponse(json.dumps({'msg':'Already opened'}))
+            log.info('e close %s', MTU_SERVER)
+            if MTU_SERVER:
+                result = MTU_SERVER.open_window(d.uuid)
+                return HttpResponse(json.dumps({'msg':result}))
+            else:
+                return Http404(json.dumps({'msg':'Communication server down'}))
+        except Exception as err:
+            log.error('ERRORRR: %s', err)
+            HttpResponse('error')
+    return Http404('Use GET for displaying actions')
+
+
+@login_required
+def close_window(request):
+    pass
+
 @login_required
 def actions(request):
     if request.method == 'GET':
@@ -335,7 +374,7 @@ def actions(request):
             end_day = datetime.now()
             no_days = monthrange(end_day.year, end_day.month-1)[1]
             start_day = end_day + timedelta(days = no_days*-1)
-        actions = Action.objects.filter(action_start__range=[start_day, end_day], device_id = uuid)
+        actions = Action.objects.filter(action_start__range=[start_day, end_day], device_id = uuid, status__in=['open','close'])
         response = []
         for action in actions:
             point = {'x': action.action_start.strftime('%Y,%m,%d,%H,%M,%S')}
@@ -346,23 +385,66 @@ def actions(request):
             response.append(point)
         log.info('graph info: %s', response)
         return HttpResponse(json.dumps({'actions': response}))
+    else:
+        return HttpResponseNotAllowed('Use GET for displaying actions')
+
+@login_required
+def generate_open_code(request):
+    log.info('request path: %s', request.path)
+    if request.method == 'GET':
+        sep = os.path.sep
+        app_path = request.path.strip(sep).split(sep)[0]
+        host = request.META.get('HTTP_HOST')
+        app_path = host + sep + app_path + sep
+        time_salt = time.time()
+        uuid = request.GET.get('uuid', '')
+        if not uuid:
+            return HttpResponse(json.dumps({'open_code': 'invalid device uuid `{}`'.format(uuid)}))
+        open_code = hashlib.sha224('{}{}'.format(uuid, time_salt)).hexdigest()
+        device = Device.objects.get(uuid = uuid, user=request.user)
+        device.open_code = 'http://' + app_path + 'open' + sep + open_code
+        device.save()
+        return HttpResponse(json.dumps({'open_code': device.open_code}))
+    else:
+        return HttpResponseNotAllowed('Use GET to generate open code for device')
+
+
+@login_required
+def generate_close_code(request):
+    if request.method == 'GET':
+        sep = os.path.sep
+        app_path = request.path.strip(sep).split(sep)[0]
+        host = request.META.get('HTTP_HOST')
+        app_path = host + sep + app_path + sep
+        time_salt = time.time()
+        uuid = request.GET.get('uuid', '')
+        if not uuid:
+            return HttpResponse(json.dumps({'close_code': 'invalid device uuid `{}`'.format(uuid)}))
+        close_code = hashlib.sha224('{}{}'.format(uuid, time_salt)).hexdigest()
+        device = Device.objects.get(uuid = uuid, user=request.user)
+        device.close_code = 'http://' + app_path + 'open' + sep + close_code
+        device.save()
+        return HttpResponse(json.dumps({'close_code': device.close_code}))
+    else:
+        return HttpResponseNotAllowed('Use GET to generate close code for device')
+
 
 @login_required
 def devices(request):
-    if request.method == 'POST':
+    if request.method in ['POST', 'PUT']:
 #         form = DeviceForm()
 #         return render_to_response('windopen/new_device.html', {'form': form}, context_instance=RequestContext(request)
-        pass
+        return HttpResponseNotAllowed('Use GET to display devices')
     else:
         context = RequestContext(request)
-        log.warning('second context: %s',context)
+#         log.warning('second context: %s',context)
         try:
             devices = Device.objects.filter(user=request.user)
         except Exception as err:
             log.error('err dev: %s', err)
-        log.warning('devices: %s', len(devices))
+#         log.warning('devices: %s', len(devices))
         context.update({'devices': devices})
-        log.info('### context full: %s', context)
+#         log.info('### context full: %s', context)
         return render_to_response('windopen/devices.html', context_instance=context)
 
 

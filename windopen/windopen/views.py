@@ -69,16 +69,48 @@ def open_window_remote(request, code):
     log.info('open_code_reverse: %s', open_code)
     try:
         d = Device.objects.get(open_code = open_code)
-    except Exception as err:
+    except Exception:
         log.error('Device not found %s', open_code)
-    return HttpResponse(open_code)
+        return Http404('Device `{}` not found'.format(code))
+    if d.status == 'open':
+        return HttpResponse(json.dumps({'msg':'Already opened'}))
+    else:
+        user = User.objects.get(username='remote')
+        a = Action(device=d, user=user)
+        a.action_start = datetime.now()
+        a.save()
+        MTU_SERVER.service.open_window(d.uuid)
+    log.info('Command: open remote %s', d.uuid)
+    return HttpResponse(json.dumps({'msg':'ok'}))
 
 
 def close_window_remote(request, code):
-    log.info('remote code: %s', code)
-    if request.method == 'GET':
-        log.info('Command: close remote')
-    return HttpResponse()
+    if request.method != 'GET':
+        return HttpResponseNotAllowed()
+        
+    log.info('Command: close remote')
+    sep = os.path.sep
+    app_path = sep.join(request.path.strip(sep).split(sep)[:2])
+    host = request.META.get('HTTP_HOST')
+    app_path = host + sep + app_path + sep
+    log.info('app_path: %s', app_path)
+    close_code = 'http://' + app_path + code + sep
+    log.info('close_code_reverse: %s', close_code)
+    try:
+        d = Device.objects.get(close_code = close_code)
+    except Exception:
+        log.error('Device not found %s', close_code)
+        return Http404('Device `{}` not found'.format(code))
+    if d.status == 'close':
+        return HttpResponse(json.dumps({'msg':'Already closed'}))
+    else:
+        user = User.objects.get(username='remote')
+        a = Action(device=d, user=user)
+        a.action_start = datetime.now()
+        a.save()
+        MTU_SERVER.service.close_window(d.uuid)
+    log.info('Command: close remote %s', d.uuid)
+    return HttpResponse(json.dumps({'msg':'ok'}))
 
 
 @login_required

@@ -49,7 +49,9 @@ class MTUService(rpyc.Service):
             d = None
         if d:
             try:
-                a = Action.objects.latest(device=d)
+                actions = Action.objects.get(device=d)
+                log.info('toate actiunile: %s', len(actions))
+                a = actions[-1]
                 log.info('action: %s',a.__dict__)
             except Exception as err:
                 log.error('Unable to retrieve the action: %s', err)

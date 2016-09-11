@@ -63,7 +63,7 @@ class MTUService(rpyc.Service):
                 d.save()
                 log.warning('status update for action %s', action)
             elif action == 'close':
-                a.status = 'open'
+                a.status = 'close'
                 a.action_end = datetime.now()
                 a.save()
                 d.status = 'close'

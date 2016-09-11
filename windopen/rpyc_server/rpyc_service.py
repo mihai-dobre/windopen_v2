@@ -48,7 +48,11 @@ class MTUService(rpyc.Service):
         except Exception as err:
             d = None
         if d:
-            a = Action.objects.latest(device=d)
+            try:
+                a = Action.objects.latest(device=d)
+                log.info('action: %s',a.__dict__)
+            except Exception as err:
+                log.error('Unable to retrieve the action: %s', err)
             if action == 'open':
                 a.status = 'open'
                 a.action_end = datetime.now()

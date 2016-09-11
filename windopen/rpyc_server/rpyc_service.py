@@ -42,6 +42,7 @@ class MTUService(rpyc.Service):
         """
         change status for device
         """
+        log.info('action finished: %s for device %s', action, uuid)
         try:
             d = Device.objects.get(uuid=uuid)
         except Exception as err:
@@ -54,12 +55,14 @@ class MTUService(rpyc.Service):
                 a.save()
                 d.status = 'open'
                 d.save()
+                log.info('status update for action %s', action)
             elif action == 'close':
                 a.status = 'open'
                 a.action_end = datetime.now()
                 a.save()
                 d.status = 'close'
                 d.save()
+                log.info('status update for action %s', action)
         return True
 
     def exposed_register(self, device_sn):

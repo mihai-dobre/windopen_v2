@@ -67,8 +67,11 @@ WSGI_APPLICATION = 'windopen_starter.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'windopen',
+        'USER': 'root',
+        'PASSWORD': 'mido',
+        'HOST': '127.0.0.1'
     }
 }
 
@@ -159,7 +162,7 @@ FOURSQUARE_APP_ID = ''
 FOURSQUARE_APP_SECRET = ''
 
 RPYC_PORT = 8010
-HOSTNAME = '127.0.0.1'
+HOSTNAME = '192.168.254.106'
 
 # RPyc config
 R_CONFIG = {

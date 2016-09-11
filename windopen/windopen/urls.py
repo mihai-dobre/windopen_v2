@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 from windopen import views
 
 router = DefaultRouter()
-router.register(r'snippets', views.SnippetView)
+# router.register(r'snippets', views.SnippetView)
 
 urlpatterns = patterns('',
     url(r'^', include(router.urls)),

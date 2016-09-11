@@ -45,15 +45,19 @@ class MTUService(rpyc.Service):
     def get_status(self): 
         return 'open'
 
+    @classmethod
     def open_window(self, rtu_uuid):
         if rtu_uuid in self.conns:
-            connection = self.conns['rtu_uuid']
+            connection = self.conns[rtu_uuid]
+            log.info('window `%s` opens', rtu_uuid)
             return connection.root.open_window()
         return False
         
+    @classmethod
     def close_window(self, rtu_uuid):  
         if rtu_uuid in self.conns:
-            connection = self.conns['rtu_uuid']
+            connection = self.conns[rtu_uuid]
+            log.info('window `%s` closes', rtu_uuid)
             return connection.root.close_window()
         return False
     

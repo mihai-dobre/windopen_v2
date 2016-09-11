@@ -49,7 +49,7 @@ class MTUService(rpyc.Service):
             d = None
         if d:
             try:
-                actions = Action.objects.get(device=d)
+                actions = Action.objects.filter(device=d)
                 log.info('toate actiunile: %s', len(actions))
                 a = actions[-1]
                 log.info('action: %s',a.__dict__)

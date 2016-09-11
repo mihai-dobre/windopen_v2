@@ -51,7 +51,7 @@ class MTUService(rpyc.Service):
             try:
                 actions = Action.objects.filter(device=d)
                 log.info('toate actiunile: %s', len(actions))
-                a = actions[-1]
+                a = actions[len(actions)-1]
                 log.info('action: %s',a.__dict__)
             except Exception as err:
                 log.error('Unable to retrieve the action: %s', err)

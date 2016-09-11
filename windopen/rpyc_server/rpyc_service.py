@@ -1,7 +1,7 @@
 import rpyc
 from datetime import datetime
 
-from windopen.models import Device,UnregisteredDevice
+from windopen.models import Device, UnregisteredDevice, Action
 from windopen_starter.log import logger_rpyc as log
 
 
@@ -37,6 +37,30 @@ class MTUService(rpyc.Service):
                     self.conns.pop(uuid)
                 except Exception as err:
                     log.error(err)
+    
+    def exposed_action_finished(self, uuid, action):
+        """
+        change status for device
+        """
+        try:
+            d = Device.objects.get(uuid=uuid)
+        except Exception as err:
+            d = None
+        if d:
+            a = Action.objects.latest(device=d)
+            if action == 'open':
+                a.status = 'open'
+                a.action_end = datetime.now()
+                a.save()
+                d.status = 'open'
+                d.save()
+            elif action == 'close':
+                a.status = 'open'
+                a.action_end = datetime.now()
+                a.save()
+                d.status = 'close'
+                d.save()
+        return True
 
     def exposed_register(self, device_sn):
         log.warning('Device %s asked for register', device_sn)

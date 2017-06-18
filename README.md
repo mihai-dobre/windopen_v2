@@ -15,16 +15,16 @@ Application architecture
 Features
 --------
 * User registration
-![alt text](https://github.com/mihai-dobre/windopen_v2/img/register_form.jpg "User registration")
+![User registration](https://github.com/mihai-dobre/windopen_v2/img/register_form.jpg "User registration")
 * Device registration
 * Web hooks
-![alt text](https://github.com/mihai-dobre/windopen_v2/img/web_hook.jpg "Web hook complete url")
+![Web hook complete url](https://github.com/mihai-dobre/windopen_v2/img/web_hook.jpg "Web hook complete url")
 * Device status
 * ** Device active
-![alt text](https://github.com/mihai-dobre/windopen_v2/img/device_active_ui.jpg "Device Active")
+![Device Active](https://github.com/mihai-dobre/windopen_v2/img/device_active_ui.jpg "Device Active")
 * ** Device inactive
-![alt text](https://github.com/mihai-dobre/windopen_v2/img/device_inactive_last_seen.jpg "Device Inactive")
+![Device Inactive](https://github.com/mihai-dobre/windopen_v2/img/device_inactive_last_seen.jpg "Device Inactive")
 * Manual operation of a device
-![alt text](https://github.com/mihai-dobre/windopen_v2/img/device_active_ui_close.jpg "Device Inactive")
+![Close window](https://github.com/mihai-dobre/windopen_v2/img/device_active_ui_close.jpg "Close window")
 * Device activity history
-![alt text](https://github.com/mihai-dobre/windopen_v2/img/details.jpg "Activity History")
+![Activity History](https://github.com/mihai-dobre/windopen_v2/img/details.jpg "Activity History")

@@ -15,7 +15,7 @@ Application architecture
 Features
 --------
 * User registration
-![User registration](https://github.com/mihai-dobre/windopen_v2/tree/refactoring/img/register_form.jpg)
+![User registration](https://raw.githubusercontent.com/mihai-dobre/windopen_v2/refactoring/img/register_form.jpg)
 * Device registration
 * Web hooks
 ![Web hook complete url](https://github.com/mihai-dobre/windopen_v2/tree/refactoring/img/web_hook.jpg)

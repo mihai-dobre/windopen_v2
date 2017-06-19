@@ -20,9 +20,9 @@ Features
 * Web hooks
 ![Web hook complete url](https://raw.githubusercontent.com/mihai-dobre/windopen_v2/refactoring/img/web_hook.jpg)
 * Device status
-* ** Device active
+  * Device active
 ![Device Active](https://raw.githubusercontent.com/mihai-dobre/windopen_v2/refactoring/img/device_active_ui.jpg)
-* ** Device inactive
+  * Device inactive
 ![Device Inactive](https://raw.githubusercontent.com/mihai-dobre/windopen_v2/refactoring/img/device_inactive_last_seen.jpg)
 * Manual operation of a device
 ![Close window](https://raw.githubusercontent.com/mihai-dobre/windopen_v2/refactoring/img/device_active_ui_close.jpg)

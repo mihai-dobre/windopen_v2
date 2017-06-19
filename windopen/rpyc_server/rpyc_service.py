@@ -1,7 +1,7 @@
 import rpyc
 from datetime import datetime
 
-from windopen.models import Device,UnregisteredDevice
+from windopen.models import Device, UnregisteredDevice, Action
 from windopen_starter.log import logger_rpyc as log
 
 
@@ -13,8 +13,8 @@ class MTUService(rpyc.Service):
         The method runs when a new connection is accepted.
         Here is registered each new RTU
         """
-        log.info('Connecting device: %s', self._conn._config['connid'])
-        self.register_new_device(self._conn)
+        #log.info('Connecting device: %s', self._conn._config['connid'])
+        return self.register_new_device(self._conn)
 
     def on_disconnect(self):
         # cod care ruleaza dupa ce o conexiune este inchisa
@@ -23,12 +23,53 @@ class MTUService(rpyc.Service):
         for uuid, conn in self.conns.iteritems():
             log.info('DISCONECT uuid: %s  connid: %s', uuid, conn._config['connid'])
             if conn._config['connid'] == self._conn._config['connid']:
+                device = Device.objects.get(uuid = uuid)
+                if device:
+                    log.info('Change status to False to device %s: ', uuid)
+                    device.active = False
+                    device.last_seen = datetime.now()
+                    device.save()
                 unreg_device = UnregisteredDevice.objects.get(uuid=uuid)
-                unreg_device.delete()
+                if unreg_device:
+                    log.info('delete the unregistred device %s: ', uuid)
+                    unreg_device.delete()
                 try:
                     self.conns.pop(uuid)
                 except Exception as err:
                     log.error(err)
+    
+    def exposed_action_finished(self, uuid, action):
+        """
+        change status for device
+        """
+        log.warning('action finished: %s for device %s', action, uuid)
+        try:
+            d = Device.objects.get(uuid=uuid)
+        except Exception as err:
+            d = None
+        if d:
+            try:
+                actions = Action.objects.filter(device=d)
+                log.info('toate actiunile: %s', len(actions))
+                a = actions[len(actions)-1]
+                log.info('action: %s',a.__dict__)
+            except Exception as err:
+                log.error('Unable to retrieve the action: %s', err)
+            if action == 'open':
+                a.status = 'open'
+                a.action_end = datetime.now()
+                a.save()
+                d.status = 'open'
+                d.save()
+                log.warning('status update for action %s', action)
+            elif action == 'close':
+                a.status = 'close'
+                a.action_end = datetime.now()
+                a.save()
+                d.status = 'close'
+                d.save()
+                log.warning('status update for action %s', action)
+        return True
 
     def exposed_register(self, device_sn):
         log.warning('Device %s asked for register', device_sn)
@@ -37,24 +78,32 @@ class MTUService(rpyc.Service):
     def get_status(self): 
         return 'open'
 
+    @classmethod
     def open_window(self, rtu_uuid):
         if rtu_uuid in self.conns:
-            connection = self.conns['rtu_uuid']
+            connection = self.conns[rtu_uuid]
+            log.info('window `%s` opens', rtu_uuid)
             return connection.root.open_window()
         return False
         
+    @classmethod
     def close_window(self, rtu_uuid):  
         if rtu_uuid in self.conns:
-            connection = self.conns['rtu_uuid']
+            connection = self.conns[rtu_uuid]
+            log.info('window `%s` closes', rtu_uuid)
             return connection.root.close_window()
         return False
     
     def register_new_device(self, conn):
-        uuid = self._conn.root.get_uuid()
+        uuid = conn.root.get_uuid()
         log.info('new_uuid: %s', uuid)
         # search through the paired devices
-        dvs = Device.objects.filter(uuid=uuid)
-        log.debug('paired devices: %s', dvs)
+        try:
+            dvs = Device.objects.get(uuid=uuid)
+        except Exception as err:
+            log.info('Device is not registered: %s', uuid)
+            dvs = []
+        log.info('######### devices already: %s',dvs)
         if dvs:
             dvs.active = True
             dvs.last_seen = datetime.now()
@@ -63,4 +112,5 @@ class MTUService(rpyc.Service):
             new_device = UnregisteredDevice(uuid=uuid)
             new_device.save()
         self.conns[uuid] = self._conn
-        log.info('connections: %s', self.conns)
+        log.info('registered: %s', uuid)
+        return True

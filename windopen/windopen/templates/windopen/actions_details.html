@@ -1,0 +1,53 @@
+{% extends 'windopen/base.html' %}
+
+{% block css %}
+{{block.super}}
+<!--
+Add some style here! 
+<style>
+.form-new_device {
+max-width: 550px;
+padding: 15px;
+margin: 0 auto;
+}
+</style> -->
+{% endblock %}
+{% block content %}
+<!-- 
+device = models.ForeignKey(Device, 'uuid')
+user = models.ForeignKey(User)
+status = models.CharField(max_length=128)
+action_start = models.DateTimeField(default=datetime.now())
+action_end = models.DateTimeField(default=datetime.now())
+-->
+<h2>Actions for device {{device}}</h2>
+<table class="table table-striped" id="actions-table">
+    <thead>
+        <tr>
+            <th></th>
+            <th>user</th>
+            <th>status</th>
+            <th>action start</th>
+            <th>action end</th>
+        </tr>
+    </thead>
+    <tbody>
+        
+        {% for action in actions %}
+        <tr>
+            <td width="40px" class="text-center">  
+            {% for color in colors %}
+                {% if action.user|stringformat:"s" == color.user|stringformat:"s" %}
+                    <span class="css-led" style="background:{{ color.color }}"></span>
+                {% endif %}
+            {% endfor %}
+            </td>
+            <td>{{ action.user }}</td>
+            <td>{{ action.status }}</td>
+            <td>{{ action.action_start }}</td>
+            <td>{{ action.action_end }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

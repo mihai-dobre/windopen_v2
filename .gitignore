@@ -1,0 +1,16 @@
+*.csv.imported
+*.gz
+*.log
+*.pid
+*.pyc
+*.rrd
+*.swp
+*~
+.coverage
+.idea
+.metadata
+.project
+.pydevproject
+bench*
+coverage.xml
+env.sh

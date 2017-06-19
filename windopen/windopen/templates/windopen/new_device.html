@@ -12,21 +12,56 @@ Add some style here!
       }
     </style> -->
 {% endblock %}
+{% block js %}
+{{block.super}}
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#new_device_form").on("submit",function(e) {
+        e.preventDefault();
+        var that = $(this);
+        var data = that.serialize();
+        var response = that.find("#form-response");
+        response.removeClass("error success").hide();
+        $.ajax({
+            url: that.attr("src"),
+            data:data,
+            dataType:'json',
+            type: 'POST',
+            success: function(r) {
+                response.addClass(r.status);
+                response.html(r.msg).show();
+                
+                if(r.status == "success") {
+                    that.find('input[type="text"]').val("");
+                }
+            },
+            error: function() {
+                alert("Internal error");
+            }
+        });
+        return false;
+    });
+});
+</script>
+{% endblock %}
 {%block content %}
     <h2>Register a new device</h2>
     <p class="text-primary">Before trying to register a new device be sure that it is plugged and the led is green.</p>
     <p class="text-primary">Search the serial number of the device on the back of the device. Insert the serial number in the field below and click register</p>
-        <form class="form-new-device" id="new_device_form" method="post" action="{% url 'new_device' %}">
+        <form class="form-new-device form-inline" id="new_device_form" method="post" action="{% url 'new_device' %}" autocomplete="off">
           {% csrf_token %}
           {% load bootstrap %}
+
+          <div class="form-group">
+            <label for="{{ form.new_device.id_for_label }}">{{ form.new_device.label }}:</label>
+            <input type="text" class="form-control" id="id_new_device" name="new_device" placeholder="Serial Number">
+          </div>
           
-          {{ form.new_device.errors }}
-          <label for="{{ form.new_device.id_for_label }}">Serial number:</label>
-          {{ form.new_device }}
 	      {% if form.new_device.help_text %}
 	          <p class="help">{{ form.new_device.help_text|safe }}</p>
 	       {% endif %}
-          <button class="btn btn-lg btn-primary" type="submit">Register</button>
-          <input type="hidden" name="submit" value="submit" />          
+          <button class="btn btn-md btn-primary" type="submit">Register</button>
+          <input type="hidden" name="submit" value="submit" />       
+          <div id="form-response"></div>   
         </form>
 {% endblock %}

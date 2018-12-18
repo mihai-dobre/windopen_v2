@@ -1,10 +1,11 @@
-from django.conf.urls import patterns, include, url
+from django.urls import path, re_path, include
 from django.contrib import admin
-from windopen import views
+from windopen_app import views
 
-urlpatterns = patterns('',
-    url(r'^$', views.index, name='index'),
-    url(r'^windopen/', include('windopen.urls')),
-    url(r'^admin/', include(admin.site.urls)),
-    # url(r'^openid/(.*)', SessionConsumer()),
-)
+urlpatterns = [
+    # path(""),
+    re_path(r"^$", views.index, name="index"),
+    re_path(r"^windopen/", include("windopen_app.urls")),
+    re_path(r"^admin/", admin.site.urls),
+    # url(r"^openid/(.*)", SessionConsumer()),
+]

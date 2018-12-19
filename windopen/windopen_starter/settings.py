@@ -137,7 +137,7 @@ NOSE_ARGS = [
 CORS_ORIGIN_ALLOW_ALL = True
 
 RPYC_PORT = 8010
-HOSTNAME = "172.16.0.104"
+HOSTNAME = "watering.dev.qadre.io"
 
 # RPyc config
 R_CONFIG = {

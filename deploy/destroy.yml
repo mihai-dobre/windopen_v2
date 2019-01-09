@@ -1,0 +1,11 @@
+# To be executed with --extra-vars "unique_infrastructure_id"
+- name: Destroy AWS infrastructure
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  environment:
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_REGION: "{{ aws_region }}"
+  roles:
+    - destroy

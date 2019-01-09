@@ -1,0 +1,73 @@
+##########################
+### CLOUDWATCH SECTION ###
+
+- name: Create CloudWatch log group
+  cloudwatchlogs_log_group:
+    state: present
+    log_group_name: "/ecs-watering/task_watering_{{ unique_infrastructure_id }}"
+    tags: { "Name": "log-group_{{ unique_infrastructure_id }}", "Env" : "QA" }
+    retention: 1
+  register: cloudwatch_log_group
+
+- name: Create watering task definition
+  ecs_taskdefinition:
+    task_role_arn: ecsTaskExecutionRole
+    arn: ecsTaskExecutionRole
+    network_mode: bridge
+    launch_type: EC2
+    force_create: yes
+    containers:
+    - name: "container_watering_{{ unique_infrastructure_id }}"
+      cpu: 128
+      essential: true
+      image: "{{ docker_repository }}:{{ docker_tag }}"
+      memory: 512
+      mountPoints:
+      - containerPath: "/var/log/windopen"
+        sourceVolume: docker_log
+      portMappings:
+      - containerPort: "{{ http_api_port }}"
+        hostPort: "{{ http_api_port }}"
+      - containerPort: "{{ rpyc_com_port }}"
+        hostPort: "{{ rpyc_com_port }}"
+      healthCheck:
+        command: "{{ health_check_command }}"
+        interval: 5
+        timeout: 5
+        startPeriod: 5
+        retries: 2
+      logConfiguration:
+        logDriver: awslogs
+        options:
+          awslogs-group: "{{ cloudwatch_log_group.log_group_name }}"
+          awslogs-region: "{{ aws_region }}"
+          awslogs-stream-prefix: ecs
+    volumes:
+      - name: docker_log
+        host:
+          sourcePath: "{{ ec2_log_path }}"
+    family: "task_watering_{{ unique_infrastructure_id }}"
+    state: present
+
+- name: create ecs service
+  ecs_service:
+    state: present
+    name: watering_service
+    cluster: "watering_{{ unique_infrastructure_id }}"
+    task_definition: "task_watering_{{ unique_infrastructure_id }}"
+    desired_count: "{{ watering_number }}"
+    delay: 10
+  register: service_output
+
+#- name: print service output
+#  debug:
+#    var: service_output
+
+- name: Use ssh to connect to each instance
+  debug:
+    msg: "ssh -i key_{{ unique_infrastructure_id }}.pem ec2-user@{{item}}"
+  with_items: "{{ groups['aws_watering'] }}"
+
+- name: Unique infrastructure id
+  debug:
+    msg: "Use the unique_infrastructure_id: {{ unique_infrastructure_id }} to destroy the infrastructure later on."

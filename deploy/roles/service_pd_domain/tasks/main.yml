@@ -1,0 +1,79 @@
+- name: Set availability zones list
+  set_fact:
+    subnet_avzs: "{{ subnet_avzs|default([]) + [item.availability_zone]}}"
+  loop: "{{ subnets }}"
+
+- name: build list of ips that need to be associated with the watering instance
+  set_fact:
+    pd_ips: "{{pd_ips | default([]) + [hostvars[item]['ec2_public_ip']] }}"
+  with_items: "{{ groups['aws_watering'] }}"
+
+- name: build list of pd ec2 instance IDs
+  set_fact:
+    pd_ids: "{{pd_ids | default([]) + [hostvars[item]['instance_id']] }}"
+  with_items: "{{ groups['aws_watering'] }}"
+
+
+- name: print list of pd ec2 instance ids
+  debug:
+    msg: "{{ pd_ids }}"
+
+#- name: Setup load balancer
+#  ec2_elb_lb:
+#    state: present
+#    name: 'pd-elb'
+#    security_group_ids: "{{ sg.group_id }}"
+#    region: "{{ aws_region }}"
+#    subnets: "{{ subnet_ids[0] }}"
+#    listeners:
+#    - protocol: http
+#      load_balancer_port: 80
+#      instance_port: 7000
+#    health_check:
+#      ping_protocol: http # options are http, https, ssl, tcp
+#      ping_port: 7000
+#      ping_path: "/status" # not required for tcp or ssl
+#      response_timeout: 5 # seconds
+#      interval: 30 # seconds
+#      unhealthy_threshold: 2
+#      healthy_threshold: 10
+#    instance_ids: "{{ pd_ids }}"
+#  register: elb_fact
+
+#- name: print elb
+#  debug:
+#    msg: "{{ elb_fact.elb.dns_name }}"
+
+# all working below
+- name: Create aws hosted zone for subdomain dev.qadre.io # dev.qadre.io is already in place so task will return the hosted zone's ID
+  route53_zone:
+    zone: "{{ dev_qadre_zone }}"
+    comment: development environment for qadre networks
+
+- name: print fact
+  debug:
+    msg: "{{ pd_ips }}"
+
+- name: Add dns entries for pd
+  route53:
+    state: present
+    zone: "{{ dev_qadre_zone }}"
+    record: "{{ pd_service_subdomain }}"
+    type: A
+    ttl: 300
+    value:
+      - "{{ pd_ips| join(',') }}"
+    wait: yes
+
+#- name: route traffic from route53 subdomain to the elb
+#  route53:
+#    state: present
+#    zone: "{{ dev_qadre_zone }}"
+#    record: "{{ pd_service_subdomain }}"
+#    type: A
+#    ttl: 600
+#    value: "{{ elb_fact.elb.dns_name }}"
+#    alias: True
+#    alias_hosted_zone_id: "{{ elb_fact.elb.hosted_zone_id }}"
+#    wait: yes
+#    overwrite: yes

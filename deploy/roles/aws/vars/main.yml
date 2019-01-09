@@ -1,0 +1,8 @@
+vpc_cidr_block: 10.0.0.0/16
+
+aws_key_name: aws
+ec2_instance_type: t2.micro
+ecs_instance_role_policy: ./roles/aws/files/AmazonEC2ContainerServiceforEC2Role.json
+ecs_task_execution_role_policy: ./roles/aws/files/AmazonECSTaskExecutionRolePolicy.json
+tasks_assume_role_policy_document: ./roles/aws/files/task_role_policy_document.json
+containers_assume_role_policy_document: ./roles/aws/files/ecs_container_role_policy_document.json

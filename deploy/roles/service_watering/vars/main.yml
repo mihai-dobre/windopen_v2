@@ -1,0 +1,2 @@
+log_level: INFO
+health_check_command: ["CMD-SHELL", "./manage.py --version || exit 1"]

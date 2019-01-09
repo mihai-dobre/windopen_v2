@@ -1,0 +1,81 @@
+- name: "Create ECS {{ cluster_type }} cluster with {{ number_of_instances }} instances"
+  ecs_cluster:
+    name: "{{ cluster_type }}_{{ unique_infrastructure_id }}"
+    state: present
+    delay: 10
+    repeat: 10
+  register: ecs_cluster
+
+- name: print ecs_cluster
+  debug:
+    msg: "{{ ecs_cluster }}"
+
+- name: Launch ECS Container Instance for {{ cluster_type }} cluster
+  ec2:
+    key_name: "key_{{ unique_infrastructure_id }}"
+    instance_type: "{{ ec2_instance_type }}"
+    # use a amazon ecs optimized image
+    image: ami-2d386654
+    wait: yes
+    group: "{{ sg.group_name }}"
+    tenancy: default
+    vpc_subnet_id: "{{ subnets[0].id }}"
+    monitoring: yes
+    zone: "{{ subnets[0].availability_zone }}"
+    user_data: |
+      #!/bin/bash
+      echo 'ECS_CLUSTER={{ ecs_cluster.cluster.clusterName }}
+      ECS_DATADIR=/data
+      ECS_ENABLE_TASK_IAM_ROLE=true
+      ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
+      ECS_LOGFILE=/log/ecs-agent.log
+      ECS_AVAILABLE_LOGGING_DRIVERS=[ "awslogs" ]
+      ECS_LOGLEVEL=info
+      ECS_ENGINE_AUTH_TYPE=docker
+      ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ vault_docker_r_username|safe }}","password":"{{ vault_docker_r_password|safe }}","email":"{{ vault_docker_r_email|safe }}"}}' >> /etc/ecs/ecs.config
+      docker stop ecs-agent
+      docker rm ecs-agent
+      docker rmi ecs-agent
+      docker run --name ecs-agent --detach=true --restart=on-failure:10 --volume=/var/run:/var/run --volume=/var/log/ecs/:/log --volume=/var/lib/ecs/data:/data --volume=/etc/ecs:/etc/ecs --net=host --env-file=/etc/ecs/ecs.config amazon/amazon-ecs-agent:latest
+    count_tag: "{{ cluster_type }}"
+    exact_count: "{{ number_of_instances }}"
+    instance_profile_name: ecsInstanceRole
+    instance_tags:
+      Name: "{{ ecs_cluster.cluster.clusterName }}"
+      watering: "{{ number_of_instances }}"
+    assign_public_ip: yes
+  register: ec2_instances
+
+- name: print public DNS names for {{ cluster_type }}
+  debug:
+    msg: "{{ instance.public_dns_name }}"
+  loop: "{{ ec2_instances.tagged_instances }}"
+  loop_control:
+    loop_var: instance
+
+- name: Wait for SSH to come up for {{ cluster_type }}
+  wait_for:
+    host: "{{ instance.public_dns_name }}"
+    port: 22
+    delay: 10
+    timeout: 200
+    state: started
+  loop: "{{ ec2_instances.tagged_instances }}"
+  loop_control:
+    loop_var: instance
+  when: ec2_instances.changed
+
+# add plug_number hosts to validate_aws inventory group
+- name: Add new hosts to aws group(in-memory inventory). Set {{ cluster_type }} hosts.
+  add_host:
+    hostname: "{{ instance.public_dns_name }}"
+    groups: "aws_{{ cluster_type }}"
+    idx: "{{ host_idx }}"
+    ec2_private_dns: "{{ instance.private_dns_name }}"
+    ec2_private_ip: "{{ instance.private_ip }}"
+    ansible_ssh_private_key_file: "./key_{{ unique_infrastructure_id }}.pem"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+  loop: "{{ ec2_instances.tagged_instances }}"
+  loop_control:
+    index_var: host_idx
+    loop_var: instance

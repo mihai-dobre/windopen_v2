@@ -1,0 +1,138 @@
+- name: Gater facts about ec2 instances
+  ec2_instance_facts:
+    filters:
+      tag:Name: "ECS-plug-{{ unique_infrastructure_id }}"
+      instance-state-name: running
+  register: ec2_facts
+
+- name: set ec2 instance ids facts when not empty
+  set_fact:
+    ec2_instance_ids: "{{ ec2_instance_ids|default([]) + [item.instance_id] }}"
+  with_items: "{{ ec2_facts.instances }}"
+
+- name: print ec2_instance_ids
+  debug:
+    msg: "EC2 instances to be terminated: {{ ec2_instance_ids }}"
+  when: ec2_instance_ids is defined
+
+- name: Terminate ec2 instances
+  ec2:
+    state: absent
+    instance_ids: "{{ ec2_instance_ids }}"
+    wait: yes
+  register: ec2_terminated
+  when: ec2_instance_ids is defined
+
+#- name: Gather facts about ecs cluster
+#  ecs_cluster_facts
+
+- name: Update ecs service desired count 0
+  ecs_service:
+    state: present
+    name: plug_service
+    cluster: "plug_cluster_{{ unique_infrastructure_id }}"
+    task_definition: "task_{{ unique_infrastructure_id }}"
+    desired_count: 0
+    delay: 10
+  ignore_errors: yes
+
+- name: Stop all cluster services
+  ecs_service:
+    name: plug_service
+    state: absent
+    cluster: "plug_cluster_{{ unique_infrastructure_id }}"
+
+- name: Gather facts about task definitions
+  ecs_taskdefinition_facts:
+    task_definition: "task_{{ unique_infrastructure_id }}"
+  register: task_definition_facts
+
+- name: Set task_definition_arn
+  set_fact:
+    task_definition_arn: "{{ task_definition_facts.task_definition_arn }}"
+  ignore_errors: yes
+
+- name: Deregister task definition
+  ecs_taskdefinition:
+    arn: "{{ task_definition_arn }}"
+    state: absent
+    containers:
+      - name: "plug_container_{{ unique_infrastructure_id }}"
+  when: task_definition_arn is defined
+
+- name: Destroy ECS cluster
+  ecs_cluster:
+    name: "plug_cluster_{{ unique_infrastructure_id }}"
+    state: absent
+
+- name: Gather facts about VPC
+  ec2_vpc_net_facts:
+    filters:
+      tag:Name: "vpc_{{ unique_infrastructure_id }}"
+  register: vpc_facts
+
+- name: Define vpc_id fact
+  set_fact:
+    vpc_id: "{{ vpc_facts.vpcs[0].id }}"
+  when: vpc_facts.vpcs
+
+- name: Define vpc_cidr fact
+  set_fact:
+    vpc_cidr: "{{ vpc_facts.vpcs[0].cidr_block }}"
+  when: vpc_facts.vpcs
+
+- name: Gather facts about subnet
+  ec2_vpc_subnet_facts:
+    filters:
+      tag:Name: "subnet_{{ unique_infrastructure_id }}"
+  register: subnet_facts
+
+- name: Destroy Subnet
+  ec2_vpc_subnet:
+    state: absent
+    vpc_id: "{{ item.vpc_id }}"
+    cidr: "{{ item.cidr_block }}"
+  with_items: "{{ subnet_facts.subnets }}"
+  when: vpc_id is defined
+
+- name: Destroy internet gateway
+  ec2_vpc_igw:
+    vpc_id: "{{ vpc_id }}"
+    state: absent
+  when: vpc_id is defined
+
+- name: Destroy route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ vpc_id }}"
+    lookup: tag
+    tags:
+      Name: public
+    state: absent
+  when: vpc_id is defined
+
+- name: Destroy security group
+  ec2_group:
+    name: "security_group_{{ unique_infrastructure_id }}"
+    state: absent
+
+- name: Destroy VPC
+  ec2_vpc_net:
+    name: "vpc_{{ unique_infrastructure_id }}"
+    state: absent
+    cidr_block: "{{ vpc_cidr | default('10.0.0.0/16') }}"
+
+- name: Delete key pair
+  ec2_key:
+    name: "key_{{ unique_infrastructure_id }}"
+    state: absent
+
+- name: Delete CloudWatch group log
+  cloudwatchlogs_log_group:
+    state: absent
+    log_group_name: "/ecs-plug/task_{{ unique_infrastructure_id }}"
+
+- name: Delete aws key
+  file:
+    state: absent
+    path: "./key_{{ unique_infrastructure_id }}.pem"
+

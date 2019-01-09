@@ -1,0 +1,14 @@
+---
+###############################################
+### Copy configurations to ECS remote hosts ###
+- name: print ec2 user
+  debug:
+    msg: "{{ ec2_user }}"
+
+- name: Create log folder on remote
+  file:
+    path: "{{ ec2_log_path }}"
+    state: directory
+    mode: 0766
+    owner: "{{ ec2_user }}"
+    group: "{{ ec2_user }}"

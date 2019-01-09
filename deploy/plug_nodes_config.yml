@@ -1,0 +1,7 @@
+- name: Prepare remote nodes to run Plug
+  hosts: aws_plug
+  connection: ssh
+  user: ec2-user
+  gather_facts: False
+  roles:
+    - plug_nodes_config

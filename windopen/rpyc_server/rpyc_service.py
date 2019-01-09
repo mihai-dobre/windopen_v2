@@ -13,7 +13,7 @@ class MTUService(rpyc.Service):
         The method runs when a new connection is accepted.
         Here is registered each new RTU
         """
-        #log.info("Connecting device: %s", conn._config["connid"])
+        # log.info("Connecting device: %s", conn._config["connid"])
         return self.register_new_device(conn)
 
     def on_disconnect(self, conn):

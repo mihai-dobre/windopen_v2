@@ -1,0 +1,218 @@
+---
+
+- name: print play dir
+  debug:
+    var: playbook_dir
+
+###################################################
+### Setup aws network & security infrastructure ###
+
+#role ARN: arn:aws:iam::563143903026:role/ecsInstanceRole
+#isntance profile ARN: arn:aws:iam::563143903026:instance-profile/ecsInstanceRole
+#path: /
+#Services:
+#    - Amazon EC2 Container Service
+#    - Amazon CloudWatch Logs
+#    - amazon EC2 Container Registry
+#- name: Create container service role
+#  iam_role:
+#    name: ecsInstanceRole
+#    assume_role_policy_document: "{{ lookup('file', '{{ containers_assume_role_policy_document }}') }}"
+#    description: Role for accessing ECS and CloudWatch
+#
+#- name: Attach policy to the ecsInstanceRole
+#  iam_policy:
+#    iam_type: role
+#    iam_name: ecsInstanceRole
+#    policy_name: AccessEcsInstance
+#    state: present
+#    policy_document: "{{ ecs_instance_role_policy }}"
+#
+#role ARN: arn:aws:iam::563143903026:role/ecsTaskExecutionRole
+#instance profile ARN: none
+#path: /
+#Services:
+#    - Amazon CloudWatch Logs
+#    - Amazon EC2 Container Registry
+#- name: Create task execution role
+#  iam_role:
+#    name: ecsTaskExecutionRole
+#    assume_role_policy_document: "{{ lookup('file', '{{ tasks_assume_role_policy_document }}') }}"
+#    description: Role for creating and executing tasks on ECS
+#
+#- name: Attach policy to the ecsTaskExecutionRole
+#  iam_policy:
+#    iam_type: role
+#    iam_name: ecsTaskExecutionRole
+#    policy_name: AmazonECSTaskExecutionRolePolicy
+#    state: present
+#    policy_document: "{{ ecs_task_execution_role_policy }}"
+
+
+- name: Create aws key pair. Save the key
+  ec2_key:
+    name: "key_{{ unique_infrastructure_id }}"
+    force: yes
+  register: aws_key
+
+- name: Save private key to file
+  copy:
+    content: "{{ aws_key.key.private_key }}"
+    dest: "./key_{{ unique_infrastructure_id }}.pem"
+    mode: 0400
+  when: aws_key.changed
+
+# Gather IP facts from ipify.org
+- name: Get my public IP
+  ipify_facts:
+  register: public_ip
+
+- name: print public ip
+  debug:
+    var: public_ip.ansible_facts.ipify_public_ip
+
+- name: Create VPC with public subnet
+  ec2_vpc_net:
+    name: "vpc_{{ unique_infrastructure_id }}"
+    cidr_block: "{{ vpc_cidr_block }}"
+    state: present
+  register: vpc
+
+# We now use the set_fact module
+# to save the id of the VPC in a new variable.
+- name: Set VPC ID in variable
+  set_fact:
+    vpc_id: "{{ vpc.vpc.id }}"
+
+- name: Create Public Subnet
+  ec2_vpc_subnet:
+    state: present
+    vpc_id: "{{ vpc_id }}"
+    cidr: "10.0.{{ subnet_idx }}.0/24"
+    az: "{{ aws_region }}{{ item }}"
+    resource_tags:
+      Name: "subnet_{{ subnet_idx }}_{{ unique_infrastructure_id }}"
+  loop:
+    - a
+    - b
+    - c
+  loop_control:
+    index_var: subnet_idx
+  register: public_subnet
+
+# Save the Public Subnet ID in a variable.
+- name: Set Public Subnets dict in variable
+  set_fact:
+    subnets: "{{ subnets| default([]) + [{'id': item.subnet.id, 'cidr': item.subnet.cidr_block, 'availability_zone': item.subnet.availability_zone}] }}"
+  with_items: "{{ public_subnet.results }}"
+
+# Every VPC needs at least one Internet Gateway.
+# This component allows traffic between the VPC and the outside world.
+- name: Create Internet Gateway for VPC
+  ec2_vpc_igw:
+    vpc_id: "{{ vpc_id }}"
+    state: present
+  register: vpc_igw
+
+# Save the Internet Gateway ID in a variable.
+- name: Set Internet Gateway ID in variable
+  set_fact:
+    igw_id: "{{ vpc_igw.gateway_id }}"
+
+# Save subnet ids in a separate list
+- name: Set subnet ids in a separate list
+  set_fact:
+    subnet_ids: "{{ subnet_ids|default([]) + [item.id] }}"
+  loop: "{{ subnets }}"
+
+# Set up a Route Table.
+# We attach that Route Table to the Public Subnet.
+# The route we create here defines the default routing
+# of the table, redirecting requests to the Internet Gateway.
+# We don't see it here, but the route table will also contain
+# a route for resources inside the VPC, so that if we need
+# to reach an internal resource, we don't go to the Internet
+# Gateway.
+- name: Set up public subnet route table
+  ec2_vpc_route_table:
+    vpc_id: "{{ vpc_id }}"
+    tags:
+      Name: public
+    subnets: "{{ subnet_ids }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw_id }}"
+
+- name: Set up cidr block list
+  set_fact:
+    cidr_blocks: "{{ cidr_blocks|default([]) + [item.cidr] }}"
+  loop: "{{ subnets }}"
+
+#- name: print cidr block list
+#  debug:
+#    msg: "{{ cidr_blocks }}"
+
+# Create Main Security Group.
+# Allow SSH access from your IP to the EC2 resources
+- name: Create Security Group
+  ec2_group:
+    name: "security_group_{{ unique_infrastructure_id }}"
+    description: "Plug Security Group"
+    vpc_id: "{{ vpc_id }}"
+    rules:
+      - proto: "tcp"
+        from_port: "22"
+        to_port: "22"
+        cidr_ip: "{{ public_ip.ansible_facts.ipify_public_ip }}/32"
+      - proto: "tcp"
+        ports: 0-65000
+        cidr_ip: "0.0.0.0/0"
+#      - proto: "tcp"
+#        from_port: "{{ http_api_port }}"
+#        to_port: "{{ http_api_port }}"
+#        cidr_ip: "{{ vpc_cidr_block }}"
+#      - proto: "tcp"
+#        from_port: "{{ pd_api_port }}"
+#        to_port: "{{ pd_api_port }}"
+#        cidr_ip: "{{ vpc_cidr_block }}"
+#      - proto: "tcp"
+#        from_port: "{{ pd_api_port }}"
+#        to_port: "{{ pd_api_port }}"
+#        cidr_ip: "{{ public_ip.ansible_facts.ipify_public_ip }}/32"
+#      - proto: "tcp"
+#        from_port: 80
+#        to_port: 80
+#        cidr_ip: "0.0.0.0/0"
+#      - proto: "tcp"
+#        from_port: "{{ plug_com_port }}"
+#        to_port: "{{ plug_com_port }}"
+#        cidr_ip: "{{ vpc_cidr_block }}"
+#      - proto: "tcp"
+#        from_port: "{{ http_api_port }}"
+#        to_port: "{{ http_api_port }}"
+#        cidr_ip: "{{ public_ip.ansible_facts.ipify_public_ip }}/32"
+#      - proto: "tcp"
+#        from_port: "{{ redis_api_port }}"
+#        to_port: "{{ redis_api_port }}"
+#        cidr_ip: "{{ vpc_cidr_block }}"
+#      - proto: "icmp"
+#        from_port: "8"
+#        to_port: "-1"
+#        cidr_ip: "{{ vpc_cidr_block }}"
+  register: sg
+
+- name: print security group
+  debug:
+    var: sg
+
+###########################
+### ECS CLUSTER SECTION ###
+
+- include_tasks:
+    "{{ item }}.yml"
+  vars:
+    cluster_type: "{{ item }}"
+    number_of_instances: "{{lookup('vars', item+'_number') | int}}"
+  loop:
+    - watering
+  when: lookup('vars', item+'_number') > 0

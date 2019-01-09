@@ -19,14 +19,9 @@ print("BASE_DIR: ", BASE_DIR)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "keuhh=0*%do-ayvy*m2k=vss*$7)j8q!@u0+d^na7mi2(^!l!d"
 
-# SECURITY WARNING: don"t run with debug turned on in production!
-DEBUG = True
-
 TEMPLATE_DEBUG = True
 
-# ALLOWED_HOSTS = ["localhost", "127.0.0.1", "172.16.0.104"]
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["34.243.195.145", "watering.dev.qadre.io"]
 
 ADMINS = [("Mihai", "mihai@qad.re")]
 

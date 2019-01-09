@@ -1,0 +1,7 @@
+###############################################
+### Generate all the names/variables needed ###
+
+- name: Generate cluster id if not set
+  set_fact:
+    unique_infrastructure_id: "{{ lookup('password', '/dev/null length=10 chars=ascii_letters') }}"
+  when: unique_infrastructure_id is undefined

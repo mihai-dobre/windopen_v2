@@ -7,9 +7,13 @@ COPY ./requirements.txt /windopen
 RUN apk add --no-cache gcc libgcc
 RUN apk add --no-cache python3-dev
 RUN apk add --no-cache uwsgi-python3
+RUN apk add --no-cache curl
 
 RUN pip install -r /windopen/requirements.txt
 
+RUN mkdir /var/log/windopen
+RUN rm -rf /windopen/windopen_starter/settings/settings_local.py
+RUN touch /windopen/windopen_starter/settings/settings_local.py
 WORKDIR /windopen
 
-ENTRYPOINT ["./manage.py", "runserver", "0.0.0.0:8000"]
+ENTRYPOINT ["python", "manage.py", "runserver", "0.0.0.0:8000"]

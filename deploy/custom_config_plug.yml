@@ -7,7 +7,7 @@ http_api_port: 8000 # port used for the http api
 # paths in the configuration file will be relative to the output directory
 
 watering_number: 1
-unique_infrastructure_id: JgmmPOpFPh # if you want to run the deploy script multiple times and you don't want to recreate the infrastructure each time
+unique_infrastructure_id: AAluEvLGwx # if you want to run the deploy script multiple times and you don't want to recreate the infrastructure each time
 
 #keys_dir: /tmp/networks/plug_3/
 #storage_dir: /tmp/networks/plug_3/

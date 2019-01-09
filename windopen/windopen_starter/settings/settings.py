@@ -19,9 +19,10 @@ print("BASE_DIR: ", BASE_DIR)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "keuhh=0*%do-ayvy*m2k=vss*$7)j8q!@u0+d^na7mi2(^!l!d"
 
+DEBUG = True
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = ["34.243.195.145", "watering.dev.qadre.io"]
+ALLOWED_HOSTS = ["watering.dev.qadre.io", "127.0.0.1", "localhost"]
 
 ADMINS = [("Mihai", "mihai@qad.re")]
 
@@ -132,8 +133,9 @@ NOSE_ARGS = [
 CORS_ORIGIN_ALLOW_ALL = True
 
 RPYC_PORT = 8010
-HOSTNAME = "watering.dev.qadre.io"
-
+# HOSTNAME = "watering.dev.qadre.io"
+# HOSTNAME = "34.243.195.145"
+HOSTNAME = "0.0.0.0"
 # RPyc config
 R_CONFIG = {
     "allow_pickle": True,
@@ -169,26 +171,34 @@ LOGGING = {
             "filters": ["require_debug_false"],
         },
         "debugtoolbar": {
-            "level": "INFO",
+            "level": "DEBUG",
             "class": "logging.StreamHandler"
         },
         "windopen": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
-            "filename": os.path.join("/var/log", "windopen", "windopen.log")
+            "filename": os.path.join("/var/log", "windopen", "windopen.log"),
+            "maxBytes": 1024*1024,
+            "backupCount": 5,
         },
         "mtu_service": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
+            "level": "DEBUG",
+            "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
-            "filename": os.path.join("/var/log", "windopen", "mtu_service.log")
+            "filename": os.path.join("/var/log", "windopen", "mtu_service.log"),
+            "maxBytes": 1024*1024,
+            "backupCount": 5,
         }
     },
     "loggers": {
+        "django": {
+            "handlers": ["windopen"],
+            "level": "DEBUG",
+        },
         "django.request": {
             "handlers": ["mail_admins"],
-            "level": "ERROR",
+            "level": "DEBUG",
         },
         "windopen": {
             "handlers": ["windopen"],

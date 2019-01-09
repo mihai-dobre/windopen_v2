@@ -38,8 +38,9 @@ def init_rpyc_server():
                                               hostname=settings.HOSTNAME,
                                               reuse_addr=True,
                                               port=settings.RPYC_PORT,
-                                              protocol_config=settings.R_CONFIG)
-                MTU_SERVER.logger.setLevel(30)
+                                              protocol_config=settings.R_CONFIG,
+                                              logger=log)
+                # MTU_SERVER.logger.setLevel(30)
                 rpyc_t_id = _thread.start_new_thread(MTU_SERVER.start, ())
                 msg = "RPyc Serving on {}:{}".format(settings.HOSTNAME, settings.RPYC_PORT)
                 log.info(msg)

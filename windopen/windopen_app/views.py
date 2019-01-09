@@ -5,11 +5,11 @@ from django.template import RequestContext
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.utils.timezone import now, timedelta
 
 # Python
 import os
 import json
-from datetime import datetime, timedelta
 from calendar import monthrange
 import time
 import hashlib
@@ -76,7 +76,7 @@ def open_window_remote(request, code):
     else:
         user = User.objects.get(username="remote")
         a = Action(device=d, user=user)
-        a.action_start = datetime.now()
+        a.action_start = now()
         a.save()
         MTU_SERVER.service.open_window(d.uuid)
     log.info("Command: open remote %s", d.uuid)
@@ -105,7 +105,7 @@ def close_window_remote(request, code):
     else:
         user = User.objects.get(username="remote")
         a = Action(device=d, user=user)
-        a.action_start = datetime.now()
+        a.action_start = now()
         a.save()
         MTU_SERVER.service.close_window(d.uuid)
     log.info("Command: close remote %s", d.uuid)
@@ -132,7 +132,7 @@ def open_window(request):
                 return HttpResponse(json.dumps({"msg": "Already opened"}))
             else:
                 a = Action(device=d, user=request.user)
-                a.action_start = datetime.now()
+                a.action_start = now()
                 a.save()
                 MTU_SERVER.service.open_window(uuid)
             log.info("Command: open window %s", uuid)
@@ -165,7 +165,7 @@ def close_window(request):
                 return HttpResponse(json.dumps({"msg": "Already closed"}))
             else:
                 a = Action(device=d, user=request.user)
-                a.action_start = datetime.now()
+                a.action_start = now()
                 a.save()
                 MTU_SERVER.service.close_window(uuid)
             log.info("Command: close window %s", uuid)
@@ -184,20 +184,17 @@ def actions(request):
         req_params = request.GET
         interval = req_params.get("interval", "week")
         uuid = req_params.get("uuid")
+        end_day = now()
         if interval == "week":
-            end_day = datetime.now()
             start_day = end_day + timedelta(days=-7)
         elif interval == "year":
-            end_day = datetime.now()
             if monthrange(end_day.year, 2)[1] == 29 and end_day.month > 2:
                 start_day = end_day + timedelta(days=-366)
             else:
                 start_day = end_day + timedelta(days=-365)
         elif interval == "day":
-            end_day = datetime.now()
             start_day = end_day + timedelta(days=-1)
         else:
-            end_day = datetime.now()
             no_days = monthrange(end_day.year, end_day.month-1)[1]
             start_day = end_day + timedelta(days=no_days*-1)
         actions = Action.objects.filter(
@@ -217,6 +214,7 @@ def actions(request):
         return HttpResponse(json.dumps({"actions": response}))
     else:
         return HttpResponseNotAllowed("Use GET for displaying actions")
+
 
 @login_required
 def generate_open_code(request):
@@ -263,12 +261,12 @@ def generate_close_code(request):
 def devices(request):
     if request.method != "GET":
         return HttpResponseNotAllowed("Use GET to display devices")
-    devices = []
     context = RequestContext(request).flatten()
     print(type(context))
     try:
         devices = Device.objects.filter(user=request.user)
     except Exception as err:
+        devices = []
         log.warning("No devices registered for user: %s | %s", request.user, err)
     context.update({"devices": devices})
     return render(request, "windopen/devices.html", context=context)
@@ -303,8 +301,8 @@ def new_device(request):
             if unreg_device:
                 d = Device(user=request.user, 
                            uuid=new_sn,
-                           registered=datetime.now(),
-                           last_seen=datetime.now(),
+                           registered=now(),
+                           last_seen=now(),
                            active=True)
                 d.save()
                 unreg_device.delete()
@@ -318,8 +316,8 @@ def new_device(request):
                             a.status = "open"
                         else:
                             a.status = "close"
-                        a.action_start = datetime.now()-timedelta(5)
-                        a.action_end = datetime.now()-timedelta(5)
+                        a.action_start = now()-timedelta(5)
+                        a.action_end = now()-timedelta(5)
                         a.save()
                     except Exception as err:
                         log.error("err create action: %s", err)

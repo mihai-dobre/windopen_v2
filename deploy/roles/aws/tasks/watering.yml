@@ -29,7 +29,7 @@
       ECS_ENABLE_TASK_IAM_ROLE=true
       ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
       ECS_LOGFILE=/log/ecs-agent.log
-      ECS_AVAILABLE_LOGGING_DRIVERS=[ "awslogs" ]
+      ECS_AVAILABLE_LOGGING_DRIVERS=[ "awslogs", "json-file" ]
       ECS_LOGLEVEL=info
       ECS_ENGINE_AUTH_TYPE=docker
       ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ vault_docker_r_username|safe }}","password":"{{ vault_docker_r_password|safe }}","email":"{{ vault_docker_r_email|safe }}"}}' >> /etc/ecs/ecs.config

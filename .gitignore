@@ -252,3 +252,4 @@ info
 
 # Settings local
 settings_local.py
+*_local.py

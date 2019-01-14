@@ -54,6 +54,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "windopen_starter.urls"
+# investigate how is this working
+LOGIN_URL = "/windopen/login/"
 
 WSGI_APPLICATION = "windopen_starter.wsgi.application"
 
@@ -160,7 +162,7 @@ LOGGING = {
             "format": "%(asctime)s %(levelname)s %(message)s"
         },
         "verbose": {
-            "format": "%(asctime)s %(levelname)-8s %(message)s",
+            "format": "%(asctime)s %(levelname)-8s %(filename)s %(lineno)d %(message)s",
             "datefmt": "%y-%m-%d %H:%M:%S",
         },
     },

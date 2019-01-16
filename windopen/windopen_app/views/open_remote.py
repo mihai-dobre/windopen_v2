@@ -12,8 +12,8 @@ from rpyc_server import MTU_SERVER
 
 
 class OpenWindowRemote(View):
-    def get(self, request, code):
 
+    def get(self, request, code):
         log.info("Command: open remote")
         sep = os.path.sep
         app_path = sep.join(request.path.strip(sep).split(sep)[:2])

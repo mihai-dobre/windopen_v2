@@ -25,7 +25,7 @@ class GenCloseCode(View):
         uuid = request.GET.get("uuid", "")
         if not uuid:
             return HttpResponse(json.dumps({"close_code": "invalid device uuid `{}`".format(uuid)}))
-        close_code = hashlib.sha224("{}{}".format(uuid, time_salt)).hexdigest()
+        close_code = hashlib.sha224("{}{}".format(uuid, time_salt).encode(encoding="UTF-8")).hexdigest()
         device = Device.objects.get(uuid=uuid, user=request.user)
         device.close_code = "http://" + app_path + "close_remote" + sep + close_code + sep
         device.save()

@@ -25,7 +25,7 @@ class GenOpenCode(View):
         uuid = request.GET.get("uuid", "")
         if not uuid:
             return HttpResponse(json.dumps({"open_code": "invalid device uuid `{}`".format(uuid)}))
-        open_code = hashlib.sha224("{}{}".format(uuid, time_salt)).hexdigest()
+        open_code = hashlib.sha224("{}{}".format(uuid, time_salt).encode(encoding="UTF-8")).hexdigest()
         device = Device.objects.get(uuid=uuid, user=request.user)
         device.open_code = "http://" + app_path + "open_remote" + sep + open_code + sep
         device.save()

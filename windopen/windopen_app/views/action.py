@@ -11,7 +11,7 @@ from windopen_app.models import Action
 from windopen_starter.log import logger_windopen as log
 
 
-class Action(View):
+class Actions(View):
     @method_decorator(login_required)
     def get(self, request):
         log.info("request: %s", request.GET)

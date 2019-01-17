@@ -16,7 +16,6 @@ class CloseWindow(View):
     @method_decorator(login_required)
     def get(self, request, *args, **kwargs):
         log.info("request: %s", request.GET.get("uuid"))
-#         return HttpResponse(json.dumps({"msg":"ok"}))
         try:
             uuid = request.GET.get("uuid", "")
             if not uuid:
@@ -39,5 +38,5 @@ class CloseWindow(View):
             log.info("MTU_SERVER: %s", MTU_SERVER)
             return HttpResponse(json.dumps({"msg": "ok"}))
         except Exception as err:
-            log.error("ERROR: %s", err)
-            HttpResponse("error")
+            log.exception("ERROR: %s", err)
+            HttpResponse(json.dumps({"msg": "error"}))

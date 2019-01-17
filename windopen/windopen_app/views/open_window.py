@@ -39,5 +39,5 @@ class OpenWindow(View):
             log.info("MTU_SERVER: %s", dir(MTU_SERVER.service))
             return HttpResponse(json.dumps({"msg": "ok"}))
         except Exception as err:
-            log.error("ERROR: %s", err)
-            HttpResponse("error")
+            log.exception("ERROR: %s", err)
+            HttpResponse(json.dumps({"msg": "error"}))

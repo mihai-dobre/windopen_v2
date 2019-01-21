@@ -1,51 +1,46 @@
-import _thread
+import time
+import threading
 from rpyc.utils.server import ThreadPoolServer
+from rpyc.core.protocol import DEFAULT_CONFIG
 from .rpyc_service import MTUService
 from django.conf import settings
 from windopen_starter.log import logger_rpyc as log
 
 
-# class Singleton(type):
-#     instance = None
-#
-#     def __call__(cls, *args, **kwargs):
-#         if cls.instance is None:
-#             cls.instance = super(Singleton, cls).__call__(*args, **kwargs)
-#         return cls.instance
-#
-#
-# class RpycServer(object):
-#     __metaclass__ = Singleton
-#
-#     def __init__(self):
-#         print("a creat un server")
-#         print(settings.HOSTNAME)
-#         try:
-#             _thread.start_new_thread(init_rpyc_server, ())
-#         except Exception as err:
-#             log.error("Failed to start rpyc server: %s", err)
+def start_daemon_thread(method, args):
+    thread = threading.Thread(target=method, args=args)
+    thread.daemon = True
+    thread.start()
+    return thread
+
+
+def keep_server_alive(server):
+    while 1:
+        if not server.active:
+            log.warning("Server not active. Doing restart!")
+            start_daemon_thread(server.start, ())
+        else:
+            time.sleep(2)
 
 
 def init_rpyc_server():
-    rpyc_t_id = None
-    MTU_SERVER = None
-    while 1:
-        if rpyc_t_id:
-            break
-        else:
-            try:
-                MTU_SERVER = ThreadPoolServer(MTUService,
-                                              hostname=settings.HOSTNAME,
-                                              reuse_addr=True,
-                                              port=settings.RPYC_PORT,
-                                              protocol_config=settings.R_CONFIG,
-                                              logger=log)
-                # MTU_SERVER.logger.setLevel(30)
-                rpyc_t_id = _thread.start_new_thread(MTU_SERVER.start, ())
-                msg = "RPyc Serving on {}:{}".format(settings.HOSTNAME, settings.RPYC_PORT)
-                log.info(msg)
-            except Exception as err:
-                log.error("MTUservice initialization failed: %s", err)
-    return MTU_SERVER
+    DEFAULT_CONFIG.update({"logger": log})
+    server = ThreadPoolServer(
+        MTUService,
+        hostname=settings.HOSTNAME,
+        port=settings.RPYC_PORT,
+        protocol_config=DEFAULT_CONFIG,
+        logger=log,
+        reuse_addr=True
+    )
+    print("Server id: ", id(server))
+    try:
+        t = start_daemon_thread(keep_server_alive, (server,))
+        log.info("RPyc Serving on {}:{}".format(settings.HOSTNAME, settings.RPYC_PORT))
+    except Exception as err:
+        t.join()
+        log.exception("MTUservice initialization failed: %s", err)
+    return server
+
 
 

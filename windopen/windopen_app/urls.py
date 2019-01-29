@@ -1,5 +1,4 @@
-from django.contrib.auth import views as auth_views
-from django.conf.urls import url, include
+from django.conf.urls import url
 
 from windopen_app.views import *
 

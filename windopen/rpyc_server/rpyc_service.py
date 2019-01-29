@@ -75,35 +75,43 @@ class MTUService(rpyc.Service):
         log.warning("Device %s asked for register", device_sn)
         return True
 
-    def get_status(self): 
-        return "open"
+    @classmethod
+    def get_status(cls, uuid):
+        if uuid in cls.conns:
+            conn = cls.conns[uuid]
+            log.info("getting status for device: %s", uuid)
+            status = conn.root.get_status()
+            log.info("device status is: %s", status)
+            return True if status in ["open", "closed"] else False
+        return False
 
     @classmethod
-    def open_window(self, rtu_uuid):
-        if rtu_uuid in self.conns:
-            connection = self.conns[rtu_uuid]
+    def open_window(cls, rtu_uuid):
+        if rtu_uuid in cls.conns:
+            connection = cls.conns[rtu_uuid]
             log.info("window `%s` opens", rtu_uuid)
             return connection.root.open_window()
         return False
 
     @classmethod
-    def close_window(self, rtu_uuid):
-        if rtu_uuid in self.conns:
-            connection = self.conns[rtu_uuid]
+    def close_window(cls, rtu_uuid):
+        if rtu_uuid in cls.conns:
+            connection = cls.conns[rtu_uuid]
             log.info("window `%s` closes", rtu_uuid)
             return connection.root.close_window()
         return False
-    
-    def register_new_device(self, conn):
+
+    @classmethod
+    def register_new_device(cls, conn):
         uuid = conn.root.get_uuid()
         log.info("new_uuid: %s", uuid)
         # search through the paired devices
         try:
             dvs = Device.objects.get(uuid=uuid)
+            log.info("Device %s already exists.", dvs)
         except Exception as err:
             log.info("Device is not registered: %s", uuid)
-            dvs = []
-        log.info("######### devices already: %s", dvs)
+            dvs = None
         if dvs:
             dvs.active = True
             dvs.last_seen = now()
@@ -111,6 +119,6 @@ class MTUService(rpyc.Service):
         else:
             new_device = UnregisteredDevice(uuid=uuid)
             new_device.save()
-        self.conns[uuid] = conn
+        cls.conns[uuid] = conn
         log.info("registered: %s | %s", uuid, conn)
         return True

@@ -24,7 +24,7 @@ class OpenWindow(View):
                 d = Device.objects.get(uuid=uuid)
             except Exception as err:
                 d = None
-            log.info("a luat device: %s", d.__dict__)
+            log.info("a luat device: %s", d.uuid)
             if not d:
                 raise Http404("Device `{}` not found".format(uuid))
             if d.status == "open":
@@ -35,8 +35,6 @@ class OpenWindow(View):
                 a.save()
                 MTU_SERVER.service.open_window(uuid)
             log.info("Command: open window %s", uuid)
-            log.info("MTU_SERVER: %s", dir(MTU_SERVER))
-            log.info("MTU_SERVER: %s", dir(MTU_SERVER.service))
             return HttpResponse(json.dumps({"msg": "ok"}))
         except Exception as err:
             log.exception("ERROR: %s", err)

@@ -24,7 +24,7 @@ def keep_server_alive(server):
 
 
 def init_rpyc_server():
-    DEFAULT_CONFIG.update({"logger": log})
+    DEFAULT_CONFIG.update({"logger": log, "sync_request_timeout": 600})
     server = ThreadPoolServer(
         MTUService,
         hostname=settings.HOSTNAME,

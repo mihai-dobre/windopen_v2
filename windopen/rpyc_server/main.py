@@ -19,19 +19,19 @@ def keep_server_alive(server):
         if not server.active:
             log.warning("Server not active. Doing restart!")
             start_daemon_thread(server.start, ())
-        else:
-            time.sleep(2)
+        time.sleep(2)
 
 
 def init_rpyc_server():
-    DEFAULT_CONFIG.update({"logger": log, "sync_request_timeout": 600})
+    DEFAULT_CONFIG.update({"logger": log})
     server = ThreadPoolServer(
         MTUService,
         hostname=settings.HOSTNAME,
         port=settings.RPYC_PORT,
         protocol_config=DEFAULT_CONFIG,
         logger=log,
-        reuse_addr=True
+        reuse_addr=True,
+        listener_timeout=None
     )
     print("Server id: ", id(server))
     try:

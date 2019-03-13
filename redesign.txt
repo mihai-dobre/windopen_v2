@@ -1,0 +1,14 @@
+General structure:
+- rpyc service, separate service
+- django web app, stand alone service
+- keep the PI service as is
+- implement beacon on RPyC service
+- the beacon should ping the web app as well.
+- the beacon should ask for state( state polling for all devices 5s interval)
+- all nodes(including django app) should implement state. If connection lost, log everything
+- watering should happen in a separate thread so that RPyC service can reply to beacon requests
+- dedicated logging for each service
+- run them on the same machine/separate machines(doesn't really matter as long as they run as a supervisor service)
+- Dockerfiles for every service
+- try to run dedicated DB on S3/other instance with Postgres/sqlite3
+- RPyC service should be deployed first, django app second

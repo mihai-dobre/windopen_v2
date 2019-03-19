@@ -19,7 +19,7 @@ def keep_server_alive(server):
         if not server.active:
             log.warning("Server not active. Doing restart!")
             start_daemon_thread(server.start, ())
-        time.sleep(2)
+        time.sleep(5)
 
 
 def init_rpyc_server():

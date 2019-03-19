@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, Http404
 
 from windopen_app.models import Device, Action
 from windopen_starter.log import logger_windopen as log
-from rpyc_server import MTU_SERVER
+from rpyc_server import MTU_SERVER, RPYC_SERVER_THREAD
 
 
 class CloseWindow(View):
@@ -33,9 +33,16 @@ class CloseWindow(View):
                 a = Action(device=d, user=request.user)
                 a.action_start = now()
                 a.save()
-                MTU_SERVER.service.close_window(uuid)
+                log.info('CloseWindow: RPyC server thread status: {}'.format(RPYC_SERVER_THREAD.is_alive()))
+                if not RPYC_SERVER_THREAD.is_alive():
+                    RPYC_SERVER_THREAD.start()
+                    log.info('CloseWindow: RPyC server force start: {}'.format(RPYC_SERVER_THREAD.is_alive()))
+                    log.info('CloseWindow: SERVER status: ', MTU_SERVER.active)
+                try:
+                    MTU_SERVER.service.close_window(uuid)
+                except Exception as err:
+                    log.exception('Failed close action')
             log.info("Command: close window %s", uuid)
-            log.info("MTU_SERVER: %s", MTU_SERVER)
             return HttpResponse(json.dumps({"msg": "ok"}))
         except Exception as err:
             log.exception("ERROR: %s", err)

@@ -187,10 +187,10 @@ LOGGING = {
         }
     },
     "loggers": {
-        # "django": {
-        #     "handlers": ["windopen"],
-        #     "level": "DEBUG",
-        # },
+        "django": {
+            "handlers": ["windopen"],
+            "level": "DEBUG",
+        },
         "django.request": {
             "handlers": ["mail_admins"],
             "level": "DEBUG",

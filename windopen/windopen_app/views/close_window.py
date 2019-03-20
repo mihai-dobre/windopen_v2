@@ -34,13 +34,9 @@ class CloseWindow(View):
                 a.action_start = now()
                 a.save()
                 log.info('CloseWindow: RPyC server thread status: {}'.format(RPYC_SERVER_THREAD.is_alive()))
-                if not RPYC_SERVER_THREAD.is_alive():
-                    RPYC_SERVER_THREAD.start()
-                    log.info('CloseWindow: RPyC server force start: {}'.format(RPYC_SERVER_THREAD.is_alive()))
-                    log.info('CloseWindow: SERVER status: ', MTU_SERVER.active)
                 try:
                     MTU_SERVER.service.close_window(uuid)
-                except Exception as err:
+                except Exception:
                     log.exception('Failed close action')
             log.info("Command: close window %s", uuid)
             return HttpResponse(json.dumps({"msg": "ok"}))

@@ -34,11 +34,10 @@ class OpenWindow(View):
                 a.action_start = now()
                 a.save()
                 log.info('RPyC server thread status: {}'.format(RPYC_SERVER_THREAD.is_alive()))
-                if not RPYC_SERVER_THREAD.is_alive():
-                    RPYC_SERVER_THREAD.start()
-                    log.info('RPyC server force start: {}'.format(RPYC_SERVER_THREAD.is_alive()))
-                    log.info('SERVER status: ', MTU_SERVER.active)
-                MTU_SERVER.service.open_window(uuid)
+                try:
+                    MTU_SERVER.service.open_window(uuid)
+                except Exception:
+                    log.exception('Failed open action')
             log.info("Command: open window %s", uuid)
             return HttpResponse(json.dumps({"msg": "ok"}))
         except Exception as err:

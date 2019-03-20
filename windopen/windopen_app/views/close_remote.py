@@ -34,13 +34,9 @@ class CloseWindowRemote(View):
             a.action_start = now()
             a.save()
             log.info('CloseRemote: RPyC server thread status: {}'.format(RPYC_SERVER_THREAD.is_alive()))
-            if not RPYC_SERVER_THREAD.is_alive():
-                RPYC_SERVER_THREAD.start()
-                log.info('CloseRemote: RPyC server force start: {}'.format(RPYC_SERVER_THREAD.is_alive()))
-                log.info('CloseRemote: SERVER status: ', MTU_SERVER.active)
             try:
                 MTU_SERVER.service.close_window(d.uuid)
-            except Exception as err:
+            except Exception:
                 log.exception('Failed close remote action')
         log.info("Command: close remote %s", d.uuid)
         return HttpResponse(json.dumps({"msg": "ok"}))

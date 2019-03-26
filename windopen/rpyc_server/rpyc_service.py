@@ -13,8 +13,8 @@ class MTUService(rpyc.Service):
         The method runs when a new connection is accepted.
         Here is registered each new RTU
         """
-        # log.info("Connecting device: %s", conn._config["connid"])
-        return self.register_new_device(conn)
+        log.info("Connecting device: %s", conn._config["connid"])
+        self.register_new_device(conn)
 
     def on_disconnect(self, conn):
         # cod care ruleaza dupa ce o conexiune este inchisa
@@ -34,7 +34,7 @@ class MTUService(rpyc.Service):
                     log.info("delete the unregistred device %s: ", uuid)
                     unreg_device.delete()
                 try:
-                    self.conns.pop(uuid)
+                    MTUService.conns.pop(uuid)
                 except Exception as err:
                     log.error(err)
     
@@ -75,34 +75,34 @@ class MTUService(rpyc.Service):
         log.warning("Device %s asked for register", device_sn)
         return True
 
-    @classmethod
-    def get_status(cls, uuid):
-        if uuid in cls.conns:
-            conn = cls.conns[uuid]
+    @staticmethod
+    def get_status(uuid):
+        if uuid in MTUService.conns:
+            conn = MTUService.conns[uuid]
             log.info("getting status for device: %s", uuid)
             status = conn.root.get_status()
             log.info("device status is: %s", status)
             return True if status in ["open", "closed"] else False
         return False
 
-    @classmethod
-    def open_window(cls, rtu_uuid):
-        if rtu_uuid in cls.conns:
-            connection = cls.conns[rtu_uuid]
+    @staticmethod
+    def open_window(rtu_uuid):
+        if rtu_uuid in MTUService.conns:
+            connection = MTUService.conns[rtu_uuid]
             log.info("window `%s` opens", rtu_uuid)
             return connection.root.open_window()
         return False
 
-    @classmethod
-    def close_window(cls, rtu_uuid):
-        if rtu_uuid in cls.conns:
-            connection = cls.conns[rtu_uuid]
+    @staticmethod
+    def close_window(rtu_uuid):
+        if rtu_uuid in MTUService.conns:
+            connection = MTUService.conns[rtu_uuid]
             log.info("window `%s` closes", rtu_uuid)
             return connection.root.close_window()
         return False
 
-    @classmethod
-    def register_new_device(cls, conn):
+    @staticmethod
+    def register_new_device(conn):
         uuid = conn.root.get_uuid()
         log.info("new_uuid: %s", uuid)
         # search through the paired devices
@@ -119,6 +119,6 @@ class MTUService(rpyc.Service):
         else:
             new_device = UnregisteredDevice(uuid=uuid)
             new_device.save()
-        cls.conns[uuid] = conn
+        MTUService.conns[uuid] = conn
         log.info("registered: %s | %s", uuid, conn)
         return True

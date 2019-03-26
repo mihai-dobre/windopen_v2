@@ -6,7 +6,7 @@
     state: present
     log_group_name: "/ecs-watering/task_watering_{{ unique_infrastructure_id }}"
     tags: { "Name": "log-group_{{ unique_infrastructure_id }}", "Env" : "QA" }
-    retention: 1
+    retention: 5
   register: cloudwatch_log_group
 
 - name: Create watering task definition

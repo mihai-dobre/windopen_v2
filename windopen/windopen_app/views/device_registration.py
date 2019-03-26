@@ -23,7 +23,6 @@ class RegisterDevice(View):
     def post(self, request):
         form = NewDeviceForm(request.POST)
         if not form.is_valid():
-            log.error(dir(form.errors))
             log.error(form.errors["new_device"].data)
             return HttpResponse(
                 json.dumps({
@@ -54,12 +53,12 @@ class RegisterDevice(View):
                 unreg_device.delete()
                 status = "success"
                 msg = "Successfully registered new device"
-                log.info("Registered new device `%s` to user `%s`", new_sn, request.user)
                 a = Action(device=d, user=request.user)
                 a.status = "close"
                 a.action_start = now() - timedelta(5)
                 a.action_end = now() - timedelta(5)
                 a.save()
+                log.info("Registered new device `%s` to user `%s`", new_sn, request.user)
                 log.info("done creating actions")
             else:
                 status = "error"

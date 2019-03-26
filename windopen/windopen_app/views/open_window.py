@@ -8,7 +8,7 @@ from django.http import HttpResponse, HttpResponseBadRequest, Http404
 
 from windopen_app.models import Device, Action
 from windopen_starter.log import logger_windopen as log
-from rpyc_server import MTU_SERVER
+from rpyc_server import MTU_SERVER, RPYC_SERVER_THREAD
 
 
 class OpenWindow(View):
@@ -24,7 +24,7 @@ class OpenWindow(View):
                 d = Device.objects.get(uuid=uuid)
             except Exception as err:
                 d = None
-            log.info("a luat device: %s", d.__dict__)
+            log.info("a luat device: %s", d.uuid)
             if not d:
                 raise Http404("Device `{}` not found".format(uuid))
             if d.status == "open":
@@ -33,11 +33,13 @@ class OpenWindow(View):
                 a = Action(device=d, user=request.user)
                 a.action_start = now()
                 a.save()
-                MTU_SERVER.service.open_window(uuid)
+                log.info('RPyC server thread status: {}'.format(RPYC_SERVER_THREAD.is_alive()))
+                try:
+                    MTU_SERVER.service.open_window(uuid)
+                except Exception:
+                    log.exception('Failed open action')
             log.info("Command: open window %s", uuid)
-            log.info("MTU_SERVER: %s", dir(MTU_SERVER))
-            log.info("MTU_SERVER: %s", dir(MTU_SERVER.service))
             return HttpResponse(json.dumps({"msg": "ok"}))
         except Exception as err:
-            log.error("ERROR: %s", err)
-            HttpResponse("error")
+            log.exception("ERROR: %s", err)
+            HttpResponse(json.dumps({"msg": "error"}))

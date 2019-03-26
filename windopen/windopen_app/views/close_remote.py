@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 
 from windopen_app.models import Device, Action
 from windopen_starter.log import logger_windopen as log
-from rpyc_server import MTU_SERVER
+from rpyc_server import MTU_SERVER, RPYC_SERVER_THREAD
 
 
 class CloseWindowRemote(View):
@@ -33,6 +33,10 @@ class CloseWindowRemote(View):
             a = Action(device=d, user=user)
             a.action_start = now()
             a.save()
-            MTU_SERVER.service.close_window(d.uuid)
+            log.info('CloseRemote: RPyC server thread status: {}'.format(RPYC_SERVER_THREAD.is_alive()))
+            try:
+                MTU_SERVER.service.close_window(d.uuid)
+            except Exception:
+                log.exception('Failed close remote action')
         log.info("Command: close remote %s", d.uuid)
         return HttpResponse(json.dumps({"msg": "ok"}))

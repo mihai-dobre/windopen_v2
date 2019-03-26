@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_extensions",
     "windopen_app",
     "bootstrapform",
     "django_nose",
@@ -138,14 +139,6 @@ RPYC_PORT = 8010
 # HOSTNAME = "watering.dev.qadre.io"
 # HOSTNAME = "34.243.195.145"
 HOSTNAME = "0.0.0.0"
-# RPyc config
-R_CONFIG = {
-    "allow_pickle": True,
-    "allow_getattr": True,
-    "allow_setattr": True,
-    "allow_delattr": True,
-    "allow_all_attrs": True,
-    }
 
 SERVER_START = True
 

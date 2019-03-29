@@ -1,4 +1,4 @@
-- name: AWS network provisioning
+- name: AWS instance provisioning
   hosts: localhost
   connection: local
   gather_facts: False
@@ -6,6 +6,9 @@
     AWS_ACCESS_KEY: "{{ aws_access_key }}"
     AWS_SECRET_KEY: "{{ aws_secret_key }}"
     AWS_REGION: "{{ aws_region }}"
+  vars:
+    cluster_type: "{{ app_name }}"
+    number_of_instances: "{{ ec2_number | int}}"
   roles:
     - common
-    - aws_network
+    - aws_ec2

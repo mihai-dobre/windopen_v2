@@ -73,7 +73,7 @@
     idx: "{{ host_idx }}"
     ec2_private_dns: "{{ instance.private_dns_name }}"
     ec2_private_ip: "{{ instance.private_ip }}"
-    ansible_ssh_private_key_file: "./key_{{ unique_infrastructure_id }}.pem"
+    ansible_ssh_private_key_file: "./.keys/key_{{ unique_infrastructure_id }}.pem"
     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
   loop: "{{ ec2_instances.tagged_instances }}"
   loop_control:

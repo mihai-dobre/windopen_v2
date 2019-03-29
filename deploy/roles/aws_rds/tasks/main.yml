@@ -1,0 +1,29 @@
+- name: Create db subnet group
+  rds_subnet_group:
+    state: present
+    name: "{{ app_name }}_subnet_group"
+    description: Subnet group for Bookmark app
+    subnets: "{{ subnet_ids }}"
+  register: db_subnet_group
+
+- name: print security group
+  debug:
+    var: db_subnet_group
+
+- name: create postgres database
+  rds:
+    command: create
+    instance_name: "{{ app_name }}db"
+    db_engine: "{{ db_engine }}"
+    size: "{{ db_size }}"
+    instance_type: db.t2.micro
+    username: "{{ db_master_user }}"
+    password: "{{ db_master_password }}"
+    vpc_security_groups: "{{ sg.group_id }}"
+    subnet: "{{ db_subnet_group.subnet_group.name }}"
+    publicly_accessible: no
+    wait: yes
+    wait_timeout: 600
+    tags:
+      Environment: dev
+      Application: bookmark

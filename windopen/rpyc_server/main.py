@@ -3,7 +3,7 @@ import threading
 import ssl
 
 from rpyc.utils.authenticators import SSLAuthenticator
-from rpyc.utils.server import ThreadPoolServer
+from rpyc.utils.server import ThreadPoolServer, ThreadedServer
 from rpyc.core.protocol import DEFAULT_CONFIG
 from .rpyc_service import MTUService
 from django.conf import settings
@@ -21,7 +21,7 @@ def start_daemon_thread(name, method, args, daemon=False):
 def init_rpyc_server():
     global DAEMON_THREAD
     DEFAULT_CONFIG.update({"logger": log})
-    server = ThreadPoolServer(
+    server = ThreadedServer(
         MTUService,
         hostname=settings.HOSTNAME,
         port=settings.RPYC_PORT,
@@ -29,7 +29,6 @@ def init_rpyc_server():
         logger=log,
         reuse_addr=True,
         listener_timeout=None,
-        nbThreads=5,
         # authenticator=SSLAuthenticator(
         #     keyfile='/var/certs/server.key',
         #     certfile='/var/certs/server.cert',

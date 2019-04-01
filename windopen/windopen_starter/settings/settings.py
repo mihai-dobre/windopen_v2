@@ -10,7 +10,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 print("BASE_DIR: ", BASE_DIR)
 
 # Quick-start development settings - unsuitable for production
@@ -18,6 +18,8 @@ print("BASE_DIR: ", BASE_DIR)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = "keuhh=0*%do-ayvy*m2k=vss*$7)j8q!@u0+d^na7mi2(^!l!d"
+
+SSL_PATH = '/tmp'
 
 DEBUG = True
 TEMPLATE_DEBUG = True
@@ -67,7 +69,7 @@ WSGI_APPLICATION = "windopen_starter.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, "db.sqlite3"),
+        "NAME": os.path.join(BASE_DIR, 'windopen_starter', 'db.sqlite3'),
     }
 }
 
@@ -135,7 +137,8 @@ NOSE_ARGS = [
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-RPYC_PORT = 8010
+# RPYC_PORT = 8010
+RPYC_PORT = 18821
 # HOSTNAME = "watering.dev.qadre.io"
 # HOSTNAME = "34.243.195.145"
 HOSTNAME = "0.0.0.0"
@@ -200,7 +203,7 @@ LOGGING = {
             "level": "DEBUG",
         },
         "mtu_service": {
-            "handlers": ["mtu_service"],
+            "handlers": ["mtu_service", "debugtoolbar"],
             "level": "DEBUG",
         }
     }

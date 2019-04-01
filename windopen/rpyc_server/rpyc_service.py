@@ -13,14 +13,14 @@ class MTUService(rpyc.Service):
         The method runs when a new connection is accepted.
         Here is registered each new RTU
         """
-        # log.info("Connecting device: %s", conn._config["connid"])
-        return self.register_new_device(conn)
+        log.info("Connecting device: %s", conn._config["connid"])
+        MTUService.register_new_device(conn)
 
     def on_disconnect(self, conn):
         # cod care ruleaza dupa ce o conexiune este inchisa
         # radiere RTU
-        log.warning("before disconnect: %s", self.conns)
-        for uuid, saved_conn in self.conns.items():
+        log.warning("before disconnect: %s", MTUService.conns)
+        for uuid, saved_conn in MTUService.conns.items():
             log.info("DISCONECT uuid: %s  connid: %s", uuid, conn._config["connid"])
             if saved_conn._config["connid"] == conn._config["connid"]:
                 device = Device.objects.get(uuid=uuid)
@@ -101,8 +101,8 @@ class MTUService(rpyc.Service):
             return connection.root.close_window()
         return False
 
-    @classmethod
-    def register_new_device(cls, conn):
+    @staticmethod
+    def register_new_device(conn):
         uuid = conn.root.get_uuid()
         log.info("new_uuid: %s", uuid)
         # search through the paired devices
@@ -117,8 +117,31 @@ class MTUService(rpyc.Service):
             dvs.last_seen = now()
             dvs.save()
         else:
+            log.info('new device. Adding it to unregistered devices: {}'.format(uuid))
             new_device = UnregisteredDevice(uuid=uuid)
             new_device.save()
-        cls.conns[uuid] = conn
+        MTUService.conns[uuid] = conn
         log.info("registered: %s | %s", uuid, conn)
-        return True
+
+    # @classmethod
+    # def register_new_device(cls, conn):
+    #     uuid = conn.root.get_uuid()
+    #     log.info("new_uuid: %s", uuid)
+    #     # search through the paired devices
+    #     try:
+    #         dvs = Device.objects.get(uuid=uuid)
+    #         log.info("Device %s already exists.", dvs)
+    #     except Exception as err:
+    #         log.info("Device is not registered: %s", uuid)
+    #         dvs = None
+    #     if dvs:
+    #         dvs.active = True
+    #         dvs.last_seen = now()
+    #         dvs.save()
+    #     else:
+    #         log.info('new device. Adding it to unregistered devices: {}'.format(uuid))
+    #         new_device = UnregisteredDevice(uuid=uuid)
+    #         new_device.save()
+    #     cls.conns[uuid] = conn
+    #     log.info("registered: %s | %s", uuid, conn)
+

@@ -1,19 +1,31 @@
-plug_version: v0.0.24
-pypi_password: "{{ vault_pypi_password }}"
 
+#### AWS SECTION ####
 aws_access_key: "{{ vault_aws_access_key }}"
 aws_secret_key: "{{ vault_aws_secret_key }}"
 aws_region: eu-west-1
 ec2_user: ec2-user
 
+
+#### DOCKER SECTION ####
 docker_r_username: "{{ vault_docker_r_username }}"
 docker_r_password: "{{ vault_docker_r_password }}"
 docker_r_email: "{{ vault_docker_r_email }}"
 
-plug_com_port: 6603
-http_api_port: 8181
-
-home: "/home/{{ ec2_user }}"
+ec2_home: "/home/{{ ec2_user }}"
 ec2_mount_path: "{{ home }}/mount/"
 ec2_log_path: "{{ home }}/log/"
 plug_container_mount_path: "/mount/"
+
+#### DB SECTION ####
+db_instance_type: db.t2.micro
+db_engine: postgres
+db_port: 5432
+db_name: watering
+db_master_user: watering
+db_master_password: "{{ vault_db_password }}"
+db_size: 5
+
+#### APP SPECIFIC ####
+app_name: watering
+http_port: 8000
+rpyc_port: 8010

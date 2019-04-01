@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_extensions",
+    # "django_extensions",
     "windopen_app",
     "bootstrapform",
     "django_nose",
@@ -68,8 +68,12 @@ WSGI_APPLICATION = "windopen_starter.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": os.path.join(BASE_DIR, 'windopen_starter', 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'watering',
+        'USER': 'watering',
+        'PASSWORD': "!2-uRL5hu?dV('Tt",
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 

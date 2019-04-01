@@ -1,0 +1,11 @@
+- name: AWS database provisioning
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  environment:
+    AWS_ACCESS_KEY: "{{ aws_access_key }}"
+    AWS_SECRET_KEY: "{{ aws_secret_key }}"
+    AWS_REGION: "{{ aws_region }}"
+  roles:
+    - common
+    - aws_rds

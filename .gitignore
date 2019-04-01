@@ -253,3 +253,8 @@ info
 # Settings local
 settings_local.py
 *_local.py
+
+# Deploy
+.keys
+deploy/.keys
+deploy/.keys/*

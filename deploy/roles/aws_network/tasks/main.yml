@@ -58,7 +58,7 @@
 - name: Save private key to file
   copy:
     content: "{{ aws_key.key.private_key }}"
-    dest: "./key_{{ unique_infrastructure_id }}.pem"
+    dest: "{{ aws_keys_path }}/{{ aws_key.key.name }}.pem"
     mode: 0400
   when: aws_key.changed
 
@@ -156,7 +156,7 @@
 # Allow SSH access from your IP to the EC2 resources
 - name: Create Security Group
   ec2_group:
-    name: "security_group_{{ unique_infrastructure_id }}"
+    name: "sg_{{ unique_infrastructure_id }}"
     description: "Plug Security Group"
     vpc_id: "{{ vpc_id }}"
     rules:
@@ -164,21 +164,21 @@
         from_port: "22"
         to_port: "22"
         cidr_ip: "{{ public_ip.ansible_facts.ipify_public_ip }}/32"
+#      - proto: "tcp"
+#        ports: 0-65000
+#        cidr_ip: "0.0.0.0/0"
       - proto: "tcp"
-        ports: 0-65000
-        cidr_ip: "0.0.0.0/0"
-#      - proto: "tcp"
-#        from_port: "{{ http_api_port }}"
-#        to_port: "{{ http_api_port }}"
-#        cidr_ip: "{{ vpc_cidr_block }}"
-#      - proto: "tcp"
-#        from_port: "{{ pd_api_port }}"
-#        to_port: "{{ pd_api_port }}"
-#        cidr_ip: "{{ vpc_cidr_block }}"
-#      - proto: "tcp"
-#        from_port: "{{ pd_api_port }}"
-#        to_port: "{{ pd_api_port }}"
-#        cidr_ip: "{{ public_ip.ansible_facts.ipify_public_ip }}/32"
+        from_port: "{{ http_port }}"
+        to_port: "{{ http_port }}"
+        cidr_ip: "{{ vpc_cidr_block }}"
+      - proto: "tcp"
+        from_port: "{{ db_port }}"
+        to_port: "{{ db_port }}"
+        cidr_ip: "{{ vpc_cidr_block }}"
+      - proto: "tcp"
+        from_port: "{{ rpyc_port }}"
+        to_port: "{{ rpyc_port }}"
+        cidr_ip: "{{ vpc_cidr_block }}"
 #      - proto: "tcp"
 #        from_port: 80
 #        to_port: 80
@@ -205,14 +205,3 @@
   debug:
     var: sg
 
-###########################
-### ECS CLUSTER SECTION ###
-
-- include_tasks:
-    "{{ item }}.yml"
-  vars:
-    cluster_type: "{{ item }}"
-    number_of_instances: "{{lookup('vars', item+'_number') | int}}"
-  loop:
-    - watering
-  when: lookup('vars', item+'_number') > 0

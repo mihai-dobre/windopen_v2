@@ -1,16 +1,10 @@
-rpyc_com_port: 8010 # port used by plug for communication between nodes
-http_api_port: 8000 # port used for the http api
+rpyc_port: 8010 # port used by plug for communication between nodes
+http_port: 8000 # port used for the http api
 
-# the config file and the output directory must be relative to the plug_generate_config_path
-# plug_generate_config_path folder will be mounted on the docker container in workdir mouting point
-# plug generate will run inside a docker container.
-# paths in the configuration file will be relative to the output directory
 
-watering_number: 1
+ec2_number: 1
 unique_infrastructure_id: AAluEvLGwx # if you want to run the deploy script multiple times and you don't want to recreate the infrastructure each time
 
-#keys_dir: /tmp/networks/plug_3/
-#storage_dir: /tmp/networks/plug_3/
 ec2_user: ec2-user
 
 docker_repository: "mihaid89/watering"

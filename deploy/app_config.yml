@@ -1,0 +1,8 @@
+- name: "Prepare remote nodes to run {{ app_name }} app"
+  hosts: aws_ec2
+  connection: ssh
+  user: ec2-user
+  gather_facts: False
+  roles:
+    - common
+    - app_config

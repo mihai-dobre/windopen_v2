@@ -70,10 +70,10 @@ DATABASES = {
     "default": {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'watering',
-        'USER': 'watering',
-        'PASSWORD': "!2-uRL5hu?dV('Tt",
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'USER': 'django_watering',
+        'PASSWORD': "H&6;'&m<(^=f,FGr",
+        'HOST': os.environ['DB_HOST'],
+        'PORT': os.environ['DB_PORT'],
     }
 }
 

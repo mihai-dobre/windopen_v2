@@ -1,7 +1,6 @@
 rpyc_port: 8010 # port used by plug for communication between nodes
 http_port: 8000 # port used for the http api
 
-
 ec2_number: 1
 unique_infrastructure_id: AAluEvLGwx # if you want to run the deploy script multiple times and you don't want to recreate the infrastructure each time
 

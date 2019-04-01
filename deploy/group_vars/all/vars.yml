@@ -2,6 +2,7 @@
 #### AWS SECTION ####
 aws_access_key: "{{ vault_aws_access_key }}"
 aws_secret_key: "{{ vault_aws_secret_key }}"
+aws_keys_path: ./.keys
 aws_region: eu-west-1
 ec2_user: ec2-user
 
@@ -12,8 +13,8 @@ docker_r_password: "{{ vault_docker_r_password }}"
 docker_r_email: "{{ vault_docker_r_email }}"
 
 ec2_home: "/home/{{ ec2_user }}"
-ec2_mount_path: "{{ home }}/mount/"
-ec2_log_path: "{{ home }}/log/"
+ec2_mount_path: "{{ ec2_home }}/mount/"
+ec2_log_path: "{{ ec2_home }}/log/"
 plug_container_mount_path: "/mount/"
 
 #### DB SECTION ####
@@ -23,6 +24,8 @@ db_port: 5432
 db_name: watering
 db_master_user: watering
 db_master_password: "{{ vault_db_password }}"
+db_django_user: django_watering
+db_django_password: "{{ vault_django_db_password }}"
 db_size: 5
 
 #### APP SPECIFIC ####

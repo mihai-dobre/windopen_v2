@@ -1,0 +1,45 @@
+---
+###############################################
+### Copy configurations to ECS remote hosts ###
+- name: print ec2 user
+  debug:
+    msg: "{{ ec2_user }}"
+
+- name: Create log folder on remote
+  file:
+    path: "{{ ec2_log_path }}"
+    state: directory
+    mode: 0766
+    owner: "{{ ec2_user }}"
+    group: "{{ ec2_user }}"
+
+
+# TODO: render db init script and run it
+#- name: Run db init script
+#  shell:
+#    echo 1
+
+- name: print hostvars
+  debug:
+    msg: "{{ hostvars['localhost'].aws_rds.instance.endpoint }}"
+
+- name: Connect to db and create Django db
+  postgresql_db:
+    login_host: "{{ hostvars['localhost'].aws_rds.instance.endpoint }}"
+    login_user: "{{ db_master_user }}"
+    login_password: "{{ db_master_password }}"
+    name: "{{ db_name }}"
+    owner: "{{ db_master_user }}"
+    port: "{{ db_port }}"
+
+- name: Connect to db and create Django user with password
+  postgresql_user:
+    db: "{{ db_name }}"
+    login_host: "{{ hostvars['localhost'].aws_rds.instance.endpoint }}"
+    login_user: "{{ db_master_user }}"
+    login_password: "{{ db_master_password }}"
+    name: "{{ db_django_user }}"
+    password: "{{ db_django_password }}"
+    role_attr_flags: LOGIN
+    priv: "CONNECT"
+    expires: infinity

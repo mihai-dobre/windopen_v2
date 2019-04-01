@@ -8,4 +8,4 @@
     AWS_REGION: "{{ aws_region }}"
   roles:
     - common
-    - service_pd_domain
+    - aws_domain

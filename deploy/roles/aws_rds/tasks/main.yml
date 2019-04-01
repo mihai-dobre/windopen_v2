@@ -13,7 +13,7 @@
 - name: create postgres database
   rds:
     command: create
-    instance_name: "{{ app_name }}db"
+    instance_name: "{{ app_name }}db{{ unique_infrastructure_id }}"
     db_engine: "{{ db_engine }}"
     size: "{{ db_size }}"
     instance_type: db.t2.micro
@@ -27,3 +27,10 @@
     tags:
       Environment: dev
       Application: bookmark
+  register: aws_rds
+
+# aws_rds.instance.endpoint
+# aws_rds.instance.port
+- name: print db details
+  debug:
+    var: aws_rds

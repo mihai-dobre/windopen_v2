@@ -22,14 +22,21 @@
       essential: true
       image: "{{ docker_repository }}:{{ docker_tag }}"
       memory: 512
+      environment:
+        - name: DB_HOST
+          value: "{{ aws_rds.instance.endpoint }}"
+        - name: DB_PORT
+          value: "{{ aws_rds.instance.port }}"
       mountPoints:
       - containerPath: "/var/log/windopen"
         sourceVolume: docker_log
       portMappings:
-      - containerPort: "{{ http_api_port }}"
-        hostPort: "{{ http_api_port }}"
-      - containerPort: "{{ rpyc_com_port }}"
-        hostPort: "{{ rpyc_com_port }}"
+      - containerPort: "{{ http_port }}"
+        hostPort: "{{ http_port }}"
+      - containerPort: "{{ rpyc_port }}"
+        hostPort: "{{ rpyc_port }}"
+      - containerPort: "{{ db_port }}"
+        hostPort: "{{ db_port }}"
       healthCheck:
         command: "{{ health_check_command }}"
         interval: 5
@@ -55,7 +62,7 @@
     name: watering_service
     cluster: "watering_{{ unique_infrastructure_id }}"
     task_definition: "task_watering_{{ unique_infrastructure_id }}"
-    desired_count: "{{ watering_number }}"
+    desired_count: "{{ ec2_number }}"
     delay: 10
   register: service_output
 
@@ -66,7 +73,7 @@
 - name: Use ssh to connect to each instance
   debug:
     msg: "ssh -i key_{{ unique_infrastructure_id }}.pem ec2-user@{{item}}"
-  with_items: "{{ groups['aws_watering'] }}"
+  with_items: "{{ groups['aws_ec2'] }}"
 
 - name: Unique infrastructure id
   debug:

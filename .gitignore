@@ -258,3 +258,4 @@ settings_local.py
 .keys
 deploy/.keys
 deploy/.keys/*
+*.retry

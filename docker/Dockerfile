@@ -12,7 +12,8 @@ RUN apk add --no-cache python3-dev
 RUN apk add --no-cache uwsgi-python3
 RUN apk add --no-cache curl
 RUN apk add --no-cache --virtual .build-deps musl-dev
-RUN apk add --no-cache --virtual .build-deps libffi libffi-dev libpq
+RUN apk add --no-cache --virtual .build-deps libffi libffi-dev
+RUN apk add --no-cache libpq
 RUN apk add --no-cache --virtual .build-deps postgresql-libs postgresql-dev
 
 RUN pip install -r /windopen/requirements.txt
@@ -24,5 +25,5 @@ RUN rm -rf /windopen/windopen_starter/settings/settings_local.py
 RUN touch /windopen/windopen_starter/settings/settings_local.py
 WORKDIR /windopen
 
-ENTRYPOINT ["python", "manage.py", "migrate"]
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+ENTRYPOINT ["sh", "-c"]
+CMD ["/windopen/django_app_init.sh"]

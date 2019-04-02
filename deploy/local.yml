@@ -1,4 +1,4 @@
-rpyc_port: 8010 # port used by plug for communication between nodes
+rpyc_port: 18821 # port used by plug for communication between nodes
 http_port: 8000 # port used for the http api
 
 ec2_number: 1

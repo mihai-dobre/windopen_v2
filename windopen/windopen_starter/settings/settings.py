@@ -66,16 +66,19 @@ WSGI_APPLICATION = "windopen_starter.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'watering',
-        'USER': 'django_watering',
-        'PASSWORD': "H&6;'&m<(^=f,FGr",
-        'HOST': os.environ['DB_HOST'],
-        'PORT': os.environ['DB_PORT'],
+try:
+    DATABASES = {
+        "default": {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'watering',
+            'USER': 'django_watering',
+            'PASSWORD': "H&6;'&m<(^=f,FGr",
+            'HOST': os.environ['DB_HOST'],
+            'PORT': os.environ['DB_PORT'],
+        }
     }
-}
+except Exception:
+    pass
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -141,7 +144,6 @@ NOSE_ARGS = [
 
 CORS_ORIGIN_ALLOW_ALL = True
 
-# RPYC_PORT = 8010
 RPYC_PORT = 18821
 # HOSTNAME = "watering.dev.qadre.io"
 # HOSTNAME = "34.243.195.145"
@@ -212,3 +214,9 @@ LOGGING = {
         }
     }
 }
+
+try:
+    from windopen_starter.settings.settings_local import *
+except Exception:
+    print('IMPORT SETTINGS_LOCAL')
+    pass

@@ -4,7 +4,7 @@
 - name: Create CloudWatch log group
   cloudwatchlogs_log_group:
     state: present
-    log_group_name: "/ecs-watering/task_watering_{{ unique_infrastructure_id }}"
+    log_group_name: "/ecs-watering/task_{{ app_name }}_{{ unique_infrastructure_id }}"
     tags: { "Name": "log-group_{{ unique_infrastructure_id }}", "Env" : "QA" }
     retention: 5
   register: cloudwatch_log_group
@@ -53,15 +53,15 @@
       - name: docker_log
         host:
           sourcePath: "{{ ec2_log_path }}"
-    family: "task_watering_{{ unique_infrastructure_id }}"
+    family: "task_{{ app_name }}_{{ unique_infrastructure_id }}"
     state: present
 
 - name: create ecs service
   ecs_service:
     state: present
     name: watering_service
-    cluster: "watering_{{ unique_infrastructure_id }}"
-    task_definition: "task_watering_{{ unique_infrastructure_id }}"
+    cluster: "{{ app_name }}_{{ unique_infrastructure_id }}"
+    task_definition: "task_{{ app_name }}_{{ unique_infrastructure_id }}"
     desired_count: "{{ ec2_number }}"
     delay: 10
   register: service_output

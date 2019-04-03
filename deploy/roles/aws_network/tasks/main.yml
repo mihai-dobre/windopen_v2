@@ -157,48 +157,21 @@
 - name: Create Security Group
   ec2_group:
     name: "sg_{{ unique_infrastructure_id }}"
-    description: "Plug Security Group"
+    description: "{{ app_name | title }} Security Group"
     vpc_id: "{{ vpc_id }}"
     rules:
       - proto: "tcp"
-        from_port: "22"
-        to_port: "22"
-        cidr_ip: "{{ public_ip.ansible_facts.ipify_public_ip }}/32"
-#      - proto: "tcp"
-#        ports: 0-65000
-#        cidr_ip: "0.0.0.0/0"
-      - proto: "tcp"
-        from_port: "{{ http_port }}"
-        to_port: "{{ http_port }}"
-        cidr_ip: "{{ vpc_cidr_block }}"
+        ports:
+          - "{{ http_port }}"
+          - "{{ rpyc_port }}"
+          - 22
+        cidr_ip: "0.0.0.0/0"
+        rule_desc: allow all on http, rpyc and ssh ports
       - proto: "tcp"
         from_port: "{{ db_port }}"
         to_port: "{{ db_port }}"
         cidr_ip: "{{ vpc_cidr_block }}"
-      - proto: "tcp"
-        from_port: "{{ rpyc_port }}"
-        to_port: "{{ rpyc_port }}"
-        cidr_ip: "{{ vpc_cidr_block }}"
-#      - proto: "tcp"
-#        from_port: 80
-#        to_port: 80
-#        cidr_ip: "0.0.0.0/0"
-#      - proto: "tcp"
-#        from_port: "{{ plug_com_port }}"
-#        to_port: "{{ plug_com_port }}"
-#        cidr_ip: "{{ vpc_cidr_block }}"
-#      - proto: "tcp"
-#        from_port: "{{ http_api_port }}"
-#        to_port: "{{ http_api_port }}"
-#        cidr_ip: "{{ public_ip.ansible_facts.ipify_public_ip }}/32"
-#      - proto: "tcp"
-#        from_port: "{{ redis_api_port }}"
-#        to_port: "{{ redis_api_port }}"
-#        cidr_ip: "{{ vpc_cidr_block }}"
-#      - proto: "icmp"
-#        from_port: "8"
-#        to_port: "-1"
-#        cidr_ip: "{{ vpc_cidr_block }}"
+        rule_desc: allow db connectivity only from LAN
   register: sg
 
 - name: print security group

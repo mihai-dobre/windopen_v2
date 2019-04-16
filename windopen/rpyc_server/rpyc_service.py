@@ -20,23 +20,32 @@ class MTUService(rpyc.Service):
         # cod care ruleaza dupa ce o conexiune este inchisa
         # radiere RTU
         log.warning("before disconnect: %s", MTUService.conns)
+        pop_list = []
         for uuid, saved_conn in MTUService.conns.items():
             log.info("DISCONECT uuid: %s  connid: %s", uuid, conn._config["connid"])
             if saved_conn._config["connid"] == conn._config["connid"]:
-                device = Device.objects.get(uuid=uuid)
-                if device:
+                # set status offline if device registered. Delete device if unregistered.
+                try:
+                    device = Device.objects.get(uuid=uuid)
                     log.info("Change status to False to device %s: ", uuid)
                     device.active = False
                     device.last_seen = now()
                     device.save()
-                unreg_device = UnregisteredDevice.objects.get(uuid=uuid)
-                if unreg_device:
-                    log.info("delete the unregistred device %s: ", uuid)
-                    unreg_device.delete()
-                try:
-                    MTUService.conns.pop(uuid)
-                except Exception as err:
-                    log.error(err)
+                except Device.DoesNotExist:
+                    try:
+                        unreg_device = UnregisteredDevice.objects.get(uuid=uuid)
+                        log.info("delete the unregistred device %s: ", uuid)
+                        unreg_device.delete()
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
+                pop_list.append(uuid)
+        for uuid in pop_list:
+            try:
+                MTUService.conns.pop(uuid)
+            except Exception as err:
+                log.error(err)
     
     def exposed_action_finished(self, uuid, action):
         """

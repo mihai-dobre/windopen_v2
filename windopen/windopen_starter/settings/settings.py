@@ -69,7 +69,7 @@ WSGI_APPLICATION = "windopen_starter.wsgi.application"
 try:
     DATABASES = {
         "default": {
-            'ENGINE': 'django.db.backends.postgresql',
+            'ENGINE': 'django_postgrespool',
             'NAME': 'watering',
             'USER': 'django_watering',
             'PASSWORD': "H&6;'&m<(^=f,FGr",
@@ -80,6 +80,13 @@ try:
     }
 except Exception:
     pass
+
+DATABASE_POOL_ARGS = {
+    'max_overflow': 10,
+    'pool_size': 5,
+    'recycle': 300,
+    'use_lifo': True,
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {

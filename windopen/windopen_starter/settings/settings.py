@@ -21,7 +21,7 @@ SECRET_KEY = "keuhh=0*%do-ayvy*m2k=vss*$7)j8q!@u0+d^na7mi2(^!l!d"
 
 SSL_PATH = '/tmp'
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = ["watering.dev.qadre.io", "127.0.0.1", "localhost"]

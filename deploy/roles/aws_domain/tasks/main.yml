@@ -6,12 +6,12 @@
 - name: build list of ips that need to be associated with the watering instance
   set_fact:
     pd_ips: "{{pd_ips | default([]) + [hostvars[item]['ec2_public_ip']] }}"
-  with_items: "{{ groups['aws_watering'] }}"
+  with_items: "{{ groups['aws_ec2'] }}"
 
 - name: build list of pd ec2 instance IDs
   set_fact:
     pd_ids: "{{pd_ids | default([]) + [hostvars[item]['instance_id']] }}"
-  with_items: "{{ groups['aws_watering'] }}"
+  with_items: "{{ groups['aws_ec2'] }}"
 
 
 - name: print list of pd ec2 instance ids

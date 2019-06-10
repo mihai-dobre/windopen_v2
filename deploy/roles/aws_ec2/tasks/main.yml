@@ -15,7 +15,7 @@
     key_name: "key_{{ unique_infrastructure_id }}"
     instance_type: "{{ ec2_instance_type }}"
     # use a amazon ecs optimized image
-    image: ami-2d386654
+    image: ami-0589680f765f34c4d
     wait: yes
     group: "{{ sg.group_name }}"
     tenancy: default
@@ -24,6 +24,26 @@
     zone: "{{ subnets[0].availability_zone }}"
     user_data: |
       #!/bin/bash
+      sudo apt-get update
+      sudo apt-get install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+      sudo apt-key fingerprint 0EBFCD88
+      sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+      sudo apt-get update
+      sudo apt-get -y install docker docker.io docker-doc
+      sudo sh -c "echo 'net.ipv4.conf.all.route_localnet = 1' >> /etc/sysctl.conf"
+      sudo sysctl -p /etc/sysctl.conf
+      sudo iptables -t nat -A PREROUTING -p tcp -d 169.254.170.2 --dport 80 -j DNAT --to-destination 127.0.0.1:51679
+      sudo iptables -t nat -A OUTPUT -d 169.254.170.2 -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
+      sudo mkdir /etc/iptables
+      sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
+      sudo mkdir -p /etc/ecs && sudo touch /etc/ecs/ecs.config
+      sudo mkdir -p /var/log/ecs /var/lib/ecs/data
+      curl -o ecs-agent.tar http://s3.amazonaws.com/amazon-ecs-agent-us-east-1/ecs-agent-latest.tar
+      sudo docker load --input ./ecs-agent.tar
+      sudo docker run --name ecs-agent --detach=true --restart=on-failure:10 --volume=/var/run:/var/run --volume=/var/log/ecs/:/log --volume=/var/lib/ecs/data:/data --volume=/etc/ecs:/etc/ecs --net=host --env-file=/etc/ecs/ecs.config amazon/amazon-ecs-agent:latest
+      sudo usermod -aG docker "{{ ec2_user }}"
+
       echo 'ECS_CLUSTER={{ ecs_cluster.cluster.clusterName }}
       ECS_DATADIR=/data
       ECS_ENABLE_TASK_IAM_ROLE=true
@@ -33,10 +53,9 @@
       ECS_LOGLEVEL=info
       ECS_ENGINE_AUTH_TYPE=docker
       ECS_ENGINE_AUTH_DATA={"https://index.docker.io/v1/":{"username":"{{ docker_r_username|safe }}","password":"{{ docker_r_password|safe }}","email":"{{ docker_r_email|safe }}"}}' >> /etc/ecs/ecs.config
-      sudo yum install -y postgresql96.x86_64 python27-psycopg2.x86_64
+      sudo apt-get install -y postgresql-client python3-psycopg2
       docker stop ecs-agent
       docker rm ecs-agent
-      docker rmi ecs-agent
       docker run --name ecs-agent --detach=true --restart=on-failure:10 --volume=/var/run:/var/run --volume=/var/log/ecs/:/log --volume=/var/lib/ecs/data:/data --volume=/etc/ecs:/etc/ecs --net=host --env-file=/etc/ecs/ecs.config amazon/amazon-ecs-agent:latest
     count_tag: "{{ cluster_type }}"
     exact_count: "{{ number_of_instances }}"
@@ -76,6 +95,7 @@
     ec2_private_ip: "{{ instance.private_ip }}"
     ansible_ssh_private_key_file: "{{ aws_keys_path }}/{{ aws_key.key.name }}.pem"
     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    instance_id: "{{ instance.id }}"
   loop: "{{ ec2_instances.tagged_instances }}"
   loop_control:
     index_var: host_idx

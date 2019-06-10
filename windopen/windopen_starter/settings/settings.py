@@ -21,7 +21,7 @@ SECRET_KEY = "keuhh=0*%do-ayvy*m2k=vss*$7)j8q!@u0+d^na7mi2(^!l!d"
 
 SSL_PATH = '/tmp'
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = ["watering.dev.qadre.io", "127.0.0.1", "localhost"]
@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "django_extensions",
+    "django_extensions",
     "windopen_app",
     "bootstrapform",
     "django_nose",
@@ -69,24 +69,17 @@ WSGI_APPLICATION = "windopen_starter.wsgi.application"
 try:
     DATABASES = {
         "default": {
-            'ENGINE': 'django_postgrespool',
-            'NAME': 'watering',
-            'USER': 'django_watering',
-            'PASSWORD': "H&6;'&m<(^=f,FGr",
-            'HOST': os.environ['DB_HOST'],
-            'PORT': os.environ['DB_PORT'],
-            'CONN_MAX_AGE': 360,
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "watering",
+            "USER": "django_watering",
+            "PASSWORD": "H&6;'&m<(^=f,FGr",
+            "HOST": os.environ["DB_HOST"],
+            "PORT": os.environ["DB_PORT"],
+            "CONN_MAX_AGE": 10,
         }
     }
 except Exception:
     pass
-
-DATABASE_POOL_ARGS = {
-    'max_overflow': 10,
-    'pool_size': 5,
-    'recycle': 300,
-    'use_lifo': True,
-}
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -118,6 +111,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = "/static/"
+
+STATICFILES_DIRS = [
+    # os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR, "windopen_app/static"),
+]
+
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 TEMPLATES = [
     {

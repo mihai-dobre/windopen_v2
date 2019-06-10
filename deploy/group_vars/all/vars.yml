@@ -2,7 +2,7 @@
 #### AWS SECTION ####
 aws_access_key: "{{ vault_aws_access_key }}"
 aws_secret_key: "{{ vault_aws_secret_key }}"
-aws_keys_path: ./.keys
+aws_keys_path: .keys
 aws_region: eu-west-1
 ec2_user: ec2-user
 

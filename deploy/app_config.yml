@@ -1,8 +1,10 @@
 - name: "Prepare remote nodes to run {{ app_name }} app"
   hosts: aws_ec2
   connection: ssh
-  user: ec2-user
+  user: "{{ ec2_user }}"
   gather_facts: False
+  vars:
+      ansible_python_interpreter: "/usr/bin/python3"
   roles:
     - common
     - app_config

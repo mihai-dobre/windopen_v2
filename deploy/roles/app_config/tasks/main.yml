@@ -1,9 +1,17 @@
 ---
 ###############################################
 ### Copy configurations to ECS remote hosts ###
-- name: print ec2 user
+- name: print ec2 variables
   debug:
-    msg: "{{ ec2_user }}"
+    msg: "/var/lib/cloud/instances/{{ hostvars[ansible_host].instance_id }}/boot-finished"
+
+- name: Wait until user data script finishes
+  raw: "test -f /var/lib/cloud/instances/{{ hostvars[ansible_host].instance_id }}/boot-finished"
+  retries: 50
+  register: cmd_res
+  changed_when: false
+  until: cmd_res is success
+
 
 - name: Create log folder on remote
   file:

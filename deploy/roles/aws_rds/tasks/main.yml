@@ -2,7 +2,7 @@
   rds_subnet_group:
     state: present
     name: "{{ app_name }}_subnet_group"
-    description: Subnet group for Bookmark app
+    description: Subnet group for Watering app
     subnets: "{{ subnet_ids }}"
   register: db_subnet_group
 

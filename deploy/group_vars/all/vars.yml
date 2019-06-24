@@ -28,6 +28,11 @@ db_django_user: django_watering
 db_django_password: "{{ vault_django_db_password }}"
 db_size: 5
 
+#### PGBOUNCER SECTION ####
+pgb_admin_user: pgb_admin
+pgb_admin_password: "{{ vault_pgb_admin_password }}"
+
+
 #### APP SPECIFIC ####
 app_name: watering
 http_port: 8000

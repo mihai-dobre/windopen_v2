@@ -172,6 +172,11 @@
         to_port: "{{ db_port }}"
         cidr_ip: "{{ vpc_cidr_block }}"
         rule_desc: allow db connectivity only from LAN
+      - proto: "tcp"
+        from_port: 6432
+        to_port: 6432
+        cidr_ip: "{{ vpc_cidr_block }}"
+        rule_desc: allow pgbouncer connectivity only from LAN
   register: sg
 
 - name: print security group

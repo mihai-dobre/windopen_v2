@@ -1,0 +1,42 @@
+---
+###############################################
+### Copy configurations to ECS remote hosts ###
+- name: print ec2 variables
+  debug:
+    msg: "/var/lib/cloud/instances/{{ hostvars[ansible_host].instance_id }}/boot-finished"
+
+- name: Wait until user data script finishes
+  raw: "test -f /var/lib/cloud/instances/{{ hostvars[ansible_host].instance_id }}/boot-finished"
+  retries: 50
+  register: cmd_res
+  changed_when: false
+  until: cmd_res is success
+
+- name: Create PGB folder on remote
+  file:
+    path: "{{ ec2_home }}/pgbouncer"
+    state: directory
+    mode: 0766
+    owner: "{{ ec2_user }}"
+    group: "{{ ec2_user }}"
+  register: pgb_ec2_path
+
+# TODO:
+# render user list template and copy it to the pgb instance
+# copy configuration file to the pgb instance
+
+- name: render PGB user list template
+  template:
+    src: userlist.j2
+    dest: "{{ pgb_ec2_path.path }}/userlist.txt"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0640"
+
+- name: Copy pgb config file on pgb instance
+  copy:
+    src: ./files/pgbouncer.ini
+    dest: "{{ pgb_ec2_path.path }}/pgbouncer.ini"
+    owner: ubuntu
+    group: ubuntu
+    mode: "0640"

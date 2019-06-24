@@ -1,20 +1,19 @@
-- name: "Create ECS {{ cluster_type }} cluster with {{ number_of_instances }} instances"
+- name: "Create ECS pg_bouncer cluster with 1 instances"
   ecs_cluster:
-    name: "{{ cluster_type }}_{{ unique_infrastructure_id }}"
+    name: "PGB_{{ unique_infrastructure_id }}"
     state: present
     delay: 10
     repeat: 10
-  register: ecs_cluster
+  register: pgb_ecs_cluster
 
-- name: print ecs_cluster
+- name: print pgb_ecs_cluster
   debug:
-    msg: "{{ ecs_cluster }}"
+    msg: "{{ pgb_ecs_cluster }}"
 
-- name: Launch ECS Container Instance for {{ cluster_type }} cluster
+- name: Launch ECS Container Instance for {{ "pg_bouncer" }} cluster
   ec2:
     key_name: "key_{{ unique_infrastructure_id }}"
     instance_type: "{{ ec2_instance_type }}"
-    # use a amazon ecs optimized image
     image: ami-0589680f765f34c4d
     wait: yes
     group: "{{ sg.group_name }}"
@@ -44,7 +43,7 @@
       sudo docker run --name ecs-agent --detach=true --restart=on-failure:10 --volume=/var/run:/var/run --volume=/var/log/ecs/:/log --volume=/var/lib/ecs/data:/data --volume=/etc/ecs:/etc/ecs --net=host --env-file=/etc/ecs/ecs.config amazon/amazon-ecs-agent:latest
       sudo usermod -aG docker "{{ ec2_user }}"
 
-      echo 'ECS_CLUSTER={{ ecs_cluster.cluster.clusterName }}
+      echo 'ECS_CLUSTER={{ pgb_ecs_cluster.cluster.clusterName }}
       ECS_DATADIR=/data
       ECS_ENABLE_TASK_IAM_ROLE=true
       ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
@@ -57,48 +56,54 @@
       docker stop ecs-agent
       docker rm ecs-agent
       docker run --name ecs-agent --detach=true --restart=on-failure:10 --volume=/var/run:/var/run --volume=/var/log/ecs/:/log --volume=/var/lib/ecs/data:/data --volume=/etc/ecs:/etc/ecs --net=host --env-file=/etc/ecs/ecs.config amazon/amazon-ecs-agent:latest
-    count_tag: "{{ cluster_type }}"
-    exact_count: "{{ number_of_instances }}"
+    count_tag: "pg_bouncer"
+    exact_count: 1
     instance_profile_name: ecsInstanceRole
     instance_tags:
-      Name: "{{ ecs_cluster.cluster.clusterName }}"
-      watering: "{{ number_of_instances }}"
+      Name: "{{ pgb_ecs_cluster.cluster.clusterName }}"
+      pg_bouncer: 1
     assign_public_ip: yes
-  register: ec2_instances
+  register: pg_bouncer_instances
 
-- name: print public DNS names for {{ cluster_type }}
+- name: print public DNS names for {{ "pg_bouncer" }}
   debug:
     msg: "{{ instance.public_dns_name }}"
-  loop: "{{ ec2_instances.tagged_instances }}"
+  loop: "{{ pg_bouncer_instances.tagged_instances }}"
   loop_control:
     loop_var: instance
 
-- name: Wait for SSH to come up for {{ cluster_type }}
+- name: Wait for SSH to come up for {{ "pg_bouncer" }}
   wait_for:
     host: "{{ instance.public_dns_name }}"
     port: 22
     delay: 10
     timeout: 200
     state: started
-  loop: "{{ ec2_instances.tagged_instances }}"
+  loop: "{{ pg_bouncer_instances.tagged_instances }}"
   loop_control:
     loop_var: instance
-  when: ec2_instances.changed
+  when: pg_bouncer_instances.changed
 
 # add plug_number hosts to validate_aws inventory group
-- name: Add new hosts to aws group(in-memory inventory). Set {{ cluster_type }} hosts.
+- name: Add new hosts to aws group(in-memory inventory). Set {{ "pg_bouncer" }} hosts.
   add_host:
     hostname: "{{ instance.public_dns_name }}"
-    groups: aws_ec2
+    groups: aws_pg_bouncer_ec2
     idx: "{{ host_idx }}"
     ec2_private_dns: "{{ instance.private_dns_name }}"
     ec2_private_ip: "{{ instance.private_ip }}"
     ansible_ssh_private_key_file: "{{ aws_keys_path }}/{{ aws_key.key.name }}.pem"
     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
     instance_id: "{{ instance.id }}"
-  loop: "{{ ec2_instances.tagged_instances }}"
+  loop: "{{ pg_bouncer_instances.tagged_instances }}"
   loop_control:
     index_var: host_idx
     loop_var: instance
 
-- import_tasks: pgbouncer_ec2.yml
+- name: Print group pg_bouncer
+  debug:
+    msg: "{{ hostvars }}"
+
+- name: print groups
+  debug:
+    msg: "{{ hostvars[groups['aws_pg_bouncer_ec2'][0]].ec2_private_ip }}"

@@ -24,9 +24,9 @@
       memory: 512
       environment:
         - name: DB_HOST
-          value: "{{ aws_rds.instance.endpoint }}"
+          value: "{{ hostvars[groups['aws_pg_bouncer_ec2'][0]].ec2_private_ip }}"
         - name: DB_PORT
-          value: "{{ aws_rds.instance.port }}"
+          value: "{{ db_port }}"
       mountPoints:
       - containerPath: "/var/log/windopen"
         sourceVolume: docker_log
@@ -37,6 +37,8 @@
         hostPort: "{{ rpyc_port }}"
       - containerPort: "{{ db_port }}"
         hostPort: "{{ db_port }}"
+#      - containerPort: 5432
+#        hostPort: 6432
       healthCheck:
         command: "{{ health_check_command }}"
         interval: 5
@@ -66,10 +68,6 @@
     delay: 10
   register: service_output
 
-#- name: print service output
-#  debug:
-#    var: service_output
-
 - name: Use ssh to connect to each instance
   debug:
     msg: "ssh -i key_{{ unique_infrastructure_id }}.pem ec2-user@{{item}}"
@@ -78,3 +76,5 @@
 - name: Unique infrastructure id
   debug:
     msg: "Use the unique_infrastructure_id: {{ unique_infrastructure_id }} to destroy the infrastructure later on."
+
+- import_tasks: pgbouncer_service.yml

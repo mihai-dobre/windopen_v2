@@ -2,6 +2,7 @@
 - import_playbook: aws_network.yml
 - import_playbook: aws_rds.yml
 - import_playbook: aws_ec2.yml
+- import_playbook: pg_bouncer_config.yml
 - import_playbook: app_config.yml
 #- import_playbook: app_domain.yml
 - import_playbook: aws_app_service.yml

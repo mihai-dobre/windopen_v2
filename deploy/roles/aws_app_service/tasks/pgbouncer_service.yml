@@ -1,0 +1,78 @@
+##########################
+### CLOUDWATCH SECTION ###
+
+- name: Create CloudWatch log group
+  cloudwatchlogs_log_group:
+    state: present
+    log_group_name: "/ecs-watering/task_pgb_{{ unique_infrastructure_id }}"
+    tags: { "Name": "log-group_{{ unique_infrastructure_id }}", "Env" : "QA" }
+    retention: 5
+  register: pgb_cloudwatch_log_group
+
+- name: Create pgb task definition
+  ecs_taskdefinition:
+    task_role_arn: ecsTaskExecutionRole
+    arn: ecsTaskExecutionRole
+    network_mode: bridge
+    launch_type: EC2
+    force_create: yes
+    containers:
+    - name: "container_pgb_{{ unique_infrastructure_id }}"
+      cpu: 128
+      essential: true
+      image: "{{ pgb_docker_repository }}:{{ pgb_docker_tag }}"
+      memory: 512
+      environment:
+        - name: DB_HOST
+          value: "{{ aws_rds.instance.endpoint }}"
+        - name: DB_NAME
+          value: "watering"
+        - name: DB_USER
+          value: "{{ db_django_user }}"
+        - name: DB_PASSWORD
+          value: "{{ db_django_password }}"
+        - name: POOL_MODE
+          value: transaction
+        - name: DEFAULT_POOL_SIZE
+          value: 30
+        - name: MAX_DB_CONNECTIONS
+          value: 30
+      portMappings:
+        - containerPort: "{{ db_port }}"
+          hostPort: "{{ db_port }}"
+        - containerPort: 6432
+          hostPort: 6432
+      healthCheck:
+        command: "{{ ['CMD-SHELL', 'echo 0'] }}"
+        interval: 5
+        timeout: 5
+        startPeriod: 5
+        retries: 2
+      logConfiguration:
+        logDriver: awslogs
+        options:
+          awslogs-group: "{{ pgb_cloudwatch_log_group.log_group_name }}"
+          awslogs-region: "{{ aws_region }}"
+          awslogs-stream-prefix: ecs
+    family: "task_pgb_{{ unique_infrastructure_id }}"
+    state: present
+
+- name: create ecs service
+  ecs_service:
+    state: present
+    name: watering_service
+    cluster: "PGB_{{ unique_infrastructure_id }}"
+    task_definition: "task_pgb_{{ unique_infrastructure_id }}"
+    desired_count: "{{ ec2_number }}"
+    delay: 10
+  register: service_output
+
+
+- name: Use ssh to connect to each instance
+  debug:
+    msg: "ssh -i key_{{ unique_infrastructure_id }}.pem ec2-user@{{item}}"
+  with_items: "{{ groups['aws_pg_bouncer_ec2'] }}"
+
+- name: Unique infrastructure id
+  debug:
+    msg: "Use the unique_infrastructure_id: {{ unique_infrastructure_id }} to destroy the infrastructure later on."

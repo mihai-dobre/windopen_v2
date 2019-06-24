@@ -1,0 +1,10 @@
+- name: "Prepare remote pgb node to run pgbouncer app"
+  hosts: aws_pg_bouncer_ec2
+  connection: ssh
+  user: "{{ ec2_user }}"
+  gather_facts: False
+  vars:
+      ansible_python_interpreter: "/usr/bin/python3"
+  roles:
+    - common
+    - pg_bouncer_config

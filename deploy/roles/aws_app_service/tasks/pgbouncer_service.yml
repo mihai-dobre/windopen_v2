@@ -37,6 +37,12 @@
           value: 30
         - name: MAX_DB_CONNECTIONS
           value: 30
+        - name: CLIENT_IDLE_TIMEOUT
+          value: 3600
+        - name: IDLE_TRANSACTION_TIMEOUT
+          value: 4800
+        - name: LISTEN_PORT
+          value: 6432
       portMappings:
         - containerPort: "{{ db_port }}"
           hostPort: "{{ db_port }}"

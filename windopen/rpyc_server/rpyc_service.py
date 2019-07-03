@@ -1,8 +1,57 @@
 import rpyc
 from django.utils.timezone import now
+from django.conf import settings
 
 from windopen_app.models import Device, UnregisteredDevice, Action
 from windopen_starter.log import logger_rpyc as log
+
+
+def set_device_status(device_uuid, conn):
+    try:
+        device = Device.objects.get(uuid=device_uuid)
+        device.active = False
+        device.last_seen = now()
+        device.save()
+        log.info("Change status to False to device %s ", device_uuid)
+    except Device.DoesNotExist:
+        log.warning("Device %s not found in Registered devices. Searching in the unregistred...", device_uuid)
+    except Exception:
+        log.exception("Unexpected error:")
+    log.warning("Shutting down beacon for connection: %s", conn._config["connid"])
+    settings.SCHEDULER.remove_job(conn._config["connid"])
+
+
+def delete_from_unregistered(device_uuid):
+    try:
+        unreg_device = UnregisteredDevice.objects.get(uuid=device_uuid)
+        unreg_device.delete()
+        log.info("Delete the unregistred device %s: ", device_uuid)
+    except UnregisteredDevice.DoesNotExist:
+        log.warning("Device does not exist in unregistered: %s", device_uuid)
+    except Exception:
+        log.exception("Unexpected error:")
+
+
+def run_beacon(conn, uuid):
+        log.info("Running beacon for device: %s | connection: %s", uuid, conn._config["connid"])
+        try:
+            device = Device.objects.get(uuid=uuid)
+        except Device.DoesNotExist:
+            log.info("Device does not exist")
+            return
+        except Exception:
+            log.exception("Don't know what is happening?!?!")
+        try:
+            status = conn.root.get_status()
+            device.status = status
+            device.active = True
+            device.last_seen = now()
+            device.save()
+            log.warning("How the fuck is getting the status? %s", status)
+        except Exception:
+            device.active = False
+            device.save()
+            log.warning("Device not active!!!")
 
 
 class MTUService(rpyc.Service):
@@ -22,30 +71,17 @@ class MTUService(rpyc.Service):
         log.warning("before disconnect: %s", MTUService.conns)
         pop_list = []
         for uuid, saved_conn in MTUService.conns.items():
-            log.info("DISCONECT uuid: %s  connid: %s", uuid, conn._config["connid"])
             if saved_conn._config["connid"] == conn._config["connid"]:
+                log.info("DISCONECT uuid: %s  connid: %s", uuid, conn._config["connid"])
                 # set status offline if device registered. Delete device if unregistered.
-                try:
-                    device = Device.objects.get(uuid=uuid)
-                    log.info("Change status to False to device %s: ", uuid)
-                    device.active = False
-                    device.last_seen = now()
-                    device.save()
-                except Device.DoesNotExist:
-                    try:
-                        unreg_device = UnregisteredDevice.objects.get(uuid=uuid)
-                        log.info("delete the unregistred device %s: ", uuid)
-                        unreg_device.delete()
-                    except Exception:
-                        pass
-                except Exception:
-                    pass
+                settings.SCHEDULER.add_job(set_device_status, None, args=[uuid, conn])
+                settings.SCHEDULER.add_job(delete_from_unregistered, None, args=[uuid])
                 pop_list.append(uuid)
         for uuid in pop_list:
             try:
                 MTUService.conns.pop(uuid)
             except Exception as err:
-                log.error(err)
+                log.exception("Trying to delete connections from pool.")
     
     def exposed_action_finished(self, uuid, action):
         """
@@ -110,24 +146,23 @@ class MTUService(rpyc.Service):
             return connection.root.close_window()
         return False
 
-    @staticmethod
-    def register_new_device(conn):
+    def register_new_device(self, conn):
         uuid = conn.root.get_uuid()
         log.info("new_uuid: %s", uuid)
         # search through the paired devices
         try:
             dvs = Device.objects.get(uuid=uuid)
-            log.info("Device %s already exists.", dvs)
-        except Exception as err:
-            log.info("Device is not registered: %s", uuid)
-            dvs = None
-        if dvs:
             dvs.active = True
             dvs.last_seen = now()
             dvs.save()
-        else:
+            log.info("Device `%s` is already registered.", dvs)
+        except Device.DoesNotExist:
             log.info('new device. Adding it to unregistered devices: {}'.format(uuid))
             new_device = UnregisteredDevice(uuid=uuid)
             new_device.save()
+        except Exception:
+            log.exception("Unable to register new or existing device: %s", uuid)
         MTUService.conns[uuid] = conn
-        log.info("registered: %s | %s", uuid, conn)
+        log.info("Starting the beacon for device: %s | conn: %s", uuid, conn._config["connid"])
+        settings.SCHEDULER.add_job(run_beacon, "interval", minutes=1, id=conn._config["connid"], args=[conn, uuid])
+

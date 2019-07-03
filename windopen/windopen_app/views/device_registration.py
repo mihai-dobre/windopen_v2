@@ -14,6 +14,7 @@ from windopen_app.models import Device, UnregisteredDevice, Action
 
 
 class RegisterDevice(View):
+
     @method_decorator(login_required)
     def get(self, request):
         form = NewDeviceForm()
@@ -44,22 +45,17 @@ class RegisterDevice(View):
             # check if the device is connected to the rpyc server and if is in the unregistered table
             unreg_device = UnregisteredDevice.objects.filter(uuid=new_sn)
             if unreg_device:
-                d = Device(user=request.user,
-                           uuid=new_sn,
-                           registered=now(),
-                           last_seen=now(),
-                           active=True)
-                d.save()
+                Device.objects.create(
+                    user=request.user,
+                    uuid=new_sn,
+                    registered=now(),
+                    last_seen=now(),
+                    active=True
+                )
                 unreg_device.delete()
                 status = "success"
                 msg = "Successfully registered new device"
-                a = Action(device=d, user=request.user)
-                a.status = "close"
-                a.action_start = now() - timedelta(5)
-                a.action_end = now() - timedelta(5)
-                a.save()
                 log.info("Registered new device `%s` to user `%s`", new_sn, request.user)
-                log.info("done creating actions")
             else:
                 status = "error"
                 msg = "The device is not connected. Please connect the device and check for the green LED"

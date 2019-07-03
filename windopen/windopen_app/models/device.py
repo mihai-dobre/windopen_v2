@@ -12,3 +12,6 @@ class Device(models.Model):
     last_seen = models.DateTimeField()
     active = models.BooleanField(default=None)
     status = models.CharField(max_length=32, default="close")
+
+    def __str__(self):
+        return "{}".format(self.uuid.title())

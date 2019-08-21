@@ -21,7 +21,7 @@ def start_daemon_thread(name, method, args, daemon=False):
 
 def init_rpyc_server():
     global DAEMON_THREAD
-    DEFAULT_CONFIG.update({"logger": log})
+    DEFAULT_CONFIG.update({"logger": log, "sync_request_timeout": 5})
     server = ThreadedServer(
         MTUService,
         hostname=settings.HOSTNAME,
@@ -34,8 +34,8 @@ def init_rpyc_server():
             ca_certs=os.path.join(settings.SSL_PATH, 'certs', 'ca-chain.cert.pem'),
             ssl_version=ssl.PROTOCOL_SSLv23
         ),
-        reuse_addr=True,
-        listener_timeout=None,
+        reuse_addr=False,
+        listener_timeout=0.1,
     )
     try:
         DAEMON_THREAD = start_daemon_thread('RPyCServer', server.start, (), True)

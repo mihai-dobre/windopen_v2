@@ -43,15 +43,15 @@ def run_beacon(conn, uuid):
             log.exception("Don't know what is happening?!?!")
         try:
             status = conn.root.get_status()
-            device.status = status
             device.active = True
             device.last_seen = now()
             device.save()
-            log.warning("How the fuck is getting the status? %s", status)
         except Exception:
             device.active = False
             device.save()
             log.warning("Device not active!!!")
+            log.warning("Shutting down beacon for connection: %s", conn._config["connid"])
+            settings.SCHEDULER.remove_job(conn._config["connid"])
 
 
 class MTUService(rpyc.Service):
@@ -97,7 +97,6 @@ class MTUService(rpyc.Service):
                 actions = Action.objects.filter(device=d)
                 log.info("toate actiunile: %s", len(actions))
                 a = actions[len(actions)-1]
-                log.info("action: %s", a.__dict__)
             except Exception as err:
                 log.error("Unable to retrieve the action: %s", err)
             if action == "open":
